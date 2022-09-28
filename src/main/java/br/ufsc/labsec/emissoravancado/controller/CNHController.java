@@ -1,5 +1,6 @@
 package br.ufsc.labsec.emissoravancado.controller;
 
+import br.ufsc.labsec.emissoravancado.communication.HttpRequester;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +17,8 @@ public class CNHController {
     public ResponseEntity <Resource> issueCertificate(@RequestParam("file") MultipartFile file) {
         System.out.println(file.getOriginalFilename());
         System.out.println(file.getSize());
+        HttpRequester requester = new HttpRequester();
+        requester.post(file.getResource());
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "imagine-um-cert.pdf" + "\"")
