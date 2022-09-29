@@ -37,6 +37,7 @@ public class HttpRequester {
         body.add("extended_report", true);
         body.add("report_type", "json");
         body.add("signature_files", file);
+        body.add("detached_files", null);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity
                 = new HttpEntity<>(body, headers);
