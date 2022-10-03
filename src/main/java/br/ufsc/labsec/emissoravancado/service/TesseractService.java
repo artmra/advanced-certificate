@@ -4,6 +4,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 @Service
-public class OCRService {
+public class TesseractService {
     public void extractData(Resource cnh) {}
 }
