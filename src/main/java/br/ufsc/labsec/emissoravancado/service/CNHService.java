@@ -2,6 +2,8 @@
 package br.ufsc.labsec.emissoravancado.service;
 
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponse;
+import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -17,12 +19,17 @@ public class CNHService {
     @Value("${cnh.verifier}")
     private String uri;
 
-    private final String uri_1 = "https://verificador.iti.gov.br/verifier-2.8.1/report";
-    private final String uri_2 = "https://verificador.iti.br/report";
-    private final String uri_3 = "https://pbad.labsec.ufsc.br/verifier-hom/report";
+    private OCRService ocrService;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public CNHService() {}
+    {
+        restTemplate.setErrorHandler(new VerifierResponseErrorHandler());
+    }
+
+    @Autowired
+    public CNHService(OCRService ocrService) {
+        this.ocrService = ocrService;
+    }
 
     public void issueAdvancedCertificate(MultipartFile file) {
         VerifierResponse verifierResponse = this.verifyPDF(file.getResource());
@@ -37,18 +44,13 @@ public class CNHService {
         requestBody.add("extended_report", true);
         requestBody.add("report_type", "json");
         requestBody.add("signature_files[]", cnh);
-
-        HttpEntity<MultiValueMap<String, Object>> requestEntity =
-                new HttpEntity<>(requestBody, headers);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(requestBody, headers);
         ResponseEntity<VerifierResponse> response =
-                this.restTemplate.postForEntity(this.uri, requestEntity, VerifierResponse.class);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            // todo: tratar erro
-        }
+                this.restTemplate.postForEntity(this.uri, request, VerifierResponse.class);
         return response.getBody();
     }
 
     private void extractData(Resource cnh) {
-        System.out.println("bk");
+        this.ocrService.extractData(cnh);
     }
 }

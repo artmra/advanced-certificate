@@ -23,6 +23,9 @@ public class CNHController {
 
     @PostMapping("/issue")
     public ResponseEntity<Resource> issueCertificate(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            // todo: retornar erro
+        }
         this.cnhService.issueAdvancedCertificate(file);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.getContentType()))

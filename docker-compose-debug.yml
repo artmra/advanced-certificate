@@ -1,0 +1,7 @@
+services:
+  emissor-avancado-debug:
+    image: emissor-avancado:debug
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    command: java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 -Djava.security.egd=file:/dev/./urandom -jar emissor-avancado.jar
