@@ -1,17 +1,5 @@
 FROM openjdk:11
 
-#ARG PROJECT_NAME
-#ARG INSTANCE_NAME
-#
-#ENV PROJECT_NAME ${PROJECT_NAME}
-#ENV INSTANCE_NAME ${INSTANCE_NAME}
-
-# this is the default variable value. It can be overwriten if necessary
-#ENV DEFAULT_DB_FILE_DIR /etc/hawa/default_dbs/
-
-#RUN apt update \
-#    && apt install -y mariadb-client
-
 ADD target/emissor-avancado*.jar emissor-avancado.jar
 
 ADD iti-certificates/pbad-labsec-ufsc-br/crt/_.labsec.ufsc.br_RNP_ICPEdu_OV_SSL_CA_2019_.cer pbad.cer

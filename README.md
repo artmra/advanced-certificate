@@ -31,4 +31,20 @@ Se os certificados estiverem corretos será obtido um output semelhante a esse:
 
 
 Agora basta adicionar os certificados a keystore do jdk em uso. O [JDK padrão](https://docs.oracle.com/cd/E37670_01/E36387/html/ol_keytool_sec.html) do linux geralmente se encontra em
-`/etc/pki/java/cacerts`.
+`/etc/pki/java/cacerts` ou `/usr/java/jdk-11.0.16.1/lib/security/cacerts`. Com o diretório da keystore identificado execute o
+seguinte comando:
+
+```shell
+sudo keytool -import -alias "<NOME_INTERNO_DO_CERTIFICADO>" -file <CERTIFICATO_DO_SERVICO>.cer \
+-keystore /usr/java/jdk-11.0.16.1/lib/security/cacerts
+```
+
+### ARQUIVO application.properties
+
+Nessa seção estão disponíveis possíveis valores para as variáveis de ambiente referenciadas no arquivo
+```application.properties```.
+
+|  Variável de ambiente  |  Possível Valor  |
+| ---------------------- | ---------------- |
+| CNH_VERIFIER_ADDRESS | https://verificador.iti.gov.br/verifier-2.8.1/report |
+| CNH_VERIFIER_ADDRESS | https://verificador.iti.br/report |
