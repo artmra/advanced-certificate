@@ -40,13 +40,12 @@ public class CNHService {
     }
 
     public void issueAdvancedCertificate(MultipartFile file) {
-        Resource resource = file.getResource();
 //        VerifierResponse verifierResponse = this.verifyPDF(resource);
-
         try {
             byte[] bytes = file.getBytes();
             List<BufferedImage> pdImages = this.pdfBoxService.extractImages(bytes);
-            this.pdfBoxService.saveImages(pdImages, resource.getFilename().replace(".pdf", ""));
+            this.extractData(pdImages);
+//            this.pdfBoxService.saveImages(pdImages, resource.getFilename().replace(".pdf", ""));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -67,7 +66,7 @@ public class CNHService {
         return response.getBody();
     }
 
-    private void extractData(Resource cnh) {
-        this.ocrService.extractData(cnh);
+    private void extractData(List<BufferedImage> images) {
+        this.ocrService.extractData(images);
     }
 }
