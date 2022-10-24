@@ -3,7 +3,9 @@ package br.ufsc.labsec.emissoravancado.service;
 
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponse;
 import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -13,11 +15,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 @Service
 public class CNHService {
@@ -40,12 +37,13 @@ public class CNHService {
     }
 
     public void issueAdvancedCertificate(MultipartFile file) {
-//        VerifierResponse verifierResponse = this.verifyPDF(resource);
+        //        VerifierResponse verifierResponse = this.verifyPDF(resource);
         try {
             byte[] bytes = file.getBytes();
             List<BufferedImage> pdImages = this.pdfBoxService.extractImages(bytes);
             this.extractData(pdImages);
-//            this.pdfBoxService.saveImages(pdImages, resource.getFilename().replace(".pdf", ""));
+            //            this.pdfBoxService.saveImages(pdImages,
+            // resource.getFilename().replace(".pdf", ""));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
