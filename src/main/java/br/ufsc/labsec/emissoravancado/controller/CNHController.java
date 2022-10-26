@@ -29,16 +29,31 @@ public class CNHController {
 
     @SneakyThrows
     @PostMapping("/issue")
-    public ResponseEntity<Resource> issueCertificate(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> issueCertificate(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             // todo: retornar erro
         }
-        this.cnhService.issueAdvancedCertificate(file);
+        String s = this.cnhService.issueAdvancedCertificate(file);
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(file.getContentType()))
+                .contentType(MediaType.TEXT_PLAIN)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + "imagine-um-cert.pdf" + "\"")
-                .body(file.getResource());
+                .body(s);
     }
+
+//    @SneakyThrows
+//    @PostMapping("/issue")
+//    public ResponseEntity<Resource> issueCertificate(@RequestParam("file") MultipartFile file) {
+//        if (file.isEmpty()) {
+//            // todo: retornar erro
+//        }
+//        this.cnhService.issueAdvancedCertificate(file);
+//        return ResponseEntity.ok()
+//                .contentType(MediaType.parseMediaType(file.getContentType()))
+//                .header(
+//                        HttpHeaders.CONTENT_DISPOSITION,
+//                        "attachment; filename=\"" + "imagine-um-cert.pdf" + "\"")
+//                .body(file.getResource());
+//    }
 }

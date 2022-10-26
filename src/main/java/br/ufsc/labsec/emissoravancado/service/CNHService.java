@@ -44,13 +44,14 @@ public class CNHService {
         this.hawaCaService = hawaCaService;
     }
 
-    public void issueAdvancedCertificate(MultipartFile file) {
+    public String issueAdvancedCertificate(MultipartFile file) {
         VerifierResponse verifierResponse = this.verifyPDF(file.getResource());
         try {
             byte[] bytes = file.getBytes();
             List<BufferedImage> pdImages = this.pdfBoxService.extractImages(bytes);
             CNHInfo cnhInfo = this.ocrService.extractData(pdImages);
             String certificate = this.hawaCaService.issueCertificateWithoutCsr(cnhInfo);
+            return certificate;
             //            this.pdfBoxService.saveImages(pdImages,
             // resource.getFilename().replace(".pdf", ""));
         } catch (IOException e) {

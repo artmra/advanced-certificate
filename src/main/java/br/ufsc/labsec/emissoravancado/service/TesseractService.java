@@ -80,7 +80,7 @@ public class TesseractService {
         try {
             var builder = CNHInfo.builder();
             // extract info from first page
-            builder.firstCNHDate(instance.doOCR(firstImage, NewCnhFormatInfoMapping.getNameArea()));
+            builder.name(instance.doOCR(firstImage, NewCnhFormatInfoMapping.getNameArea()));
             builder.docInfo(instance.doOCR(firstImage, NewCnhFormatInfoMapping.getIdDocInfoArea()));
             builder.cpf(instance.doOCR(firstImage, NewCnhFormatInfoMapping.getCpfArea()));
             builder.birthDate(
