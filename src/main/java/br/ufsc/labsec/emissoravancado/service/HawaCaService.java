@@ -3,6 +3,7 @@ package br.ufsc.labsec.emissoravancado.service;
 import br.ufsc.labsec.emissoravancado.components.CNHInfo;
 import br.ufsc.labsec.emissoravancado.components.enums.HawaCaEndpoints;
 import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
+import br.ufsc.labsec.valueobject.crypto.noncmc.CertificateResponse;
 import br.ufsc.labsec.valueobject.dto.CertificateApplicationDTO;
 import br.ufsc.labsec.valueobject.dto.NoCsrIssuingRequest;
 import br.ufsc.labsec.valueobject.xmlmapping.submission.CertificateIntentionEnum;
@@ -11,10 +12,16 @@ import br.ufsc.labsec.valueobject.xmlmapping.submission.CertificateProfileEnum;
 import br.ufsc.labsec.valueobject.xmlmapping.submission.ValidationRequirements;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.io.IOException;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.util.Base64;
+
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.openssl.PEMParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -80,11 +87,23 @@ public class HawaCaService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity<>(GSON.toJson(noCsrIssuingRequest), headers);
-        ResponseEntity<String> response =
+        ResponseEntity<CertificateResponse> response =
                 this.restTemplate.postForEntity(
                         this.hawaAddress.concat(HawaCaEndpoints.NO_CMC_SIGN_NO_CSR.getEndpoint()),
                         request,
-                        String.class);
-        return response.getBody();
+                        CertificateResponse.class);
+
+        return convertCertPEMToB64(response.getBody());
+    }
+
+    private String convertCertPEMToB64(CertificateResponse certificateResponse) throws IOException {
+        ByteArrayInputStream pemStream =
+                new ByteArrayInputStream(
+                        certificateResponse.getCertificatePem().getBytes(StandardCharsets.UTF_8));
+
+        Reader pemReader = new BufferedReader(new InputStreamReader(pemStream));
+        PEMParser pemParser = new PEMParser(pemReader);
+        X509CertificateHolder certificateHolder = (X509CertificateHolder) pemParser.readObject();
+        return Base64.getEncoder().encodeToString(certificateHolder.getEncoded());
     }
 }
