@@ -17,6 +17,7 @@
         <java.version>11</java.version>
         <spotless.version>2.27.1</spotless.version>
         <bouncycastle.version>1.68</bouncycastle.version>
+        <hawa-objects.version>1.9.0-SNAPSHOT</hawa-objects.version>
     </properties>
     <dependencies>
         <dependency>
@@ -78,6 +79,26 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcmail-jdk15on</artifactId>
             <version>${bouncycastle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>br.ufsc.labsec</groupId>
+            <artifactId>objects-authority-core</artifactId>
+            <version>${hawa-objects.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>br.ufsc.labsec</groupId>
+            <artifactId>objects-authority-ra</artifactId>
+            <version>${hawa-objects.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>br.ufsc.labsec</groupId>
+            <artifactId>objects-logger</artifactId>
+            <version>${hawa-objects.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>br.ufsc.labsec</groupId>
+            <artifactId>objects-util</artifactId>
+            <version>${hawa-objects.version}</version>
         </dependency>
 
     </dependencies>

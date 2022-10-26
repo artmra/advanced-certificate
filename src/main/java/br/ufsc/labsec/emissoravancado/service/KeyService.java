@@ -8,6 +8,7 @@ import java.util.Base64;
 import org.bouncycastle.asn1.pkcs.CertificationRequestInfo;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.DigestInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -24,24 +25,24 @@ public class KeyService {
 
     public KeyService(
             @Value("${key-service.key-size}") int keySize,
-            @Value("${key-service.key-size") String keyAlgorithm) {
+            @Value("${key-service.key-algorithm}") String keyAlgorithm) {
         this.keySize = keySize;
-        this.keyAlgorithm = KeyTypeEnum.valueOf(keyAlgorithm);
+        this.keyAlgorithm = KeyTypeEnum.valueOf(keyAlgorithm.toUpperCase());
     }
 
-    private KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
+    public KeyPair generateKeyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator keyPairGenerator =
                 KeyPairGenerator.getInstance(keyAlgorithm.getName(), new BouncyCastleProvider());
         keyPairGenerator.initialize(keySize, new SecureRandom());
         return keyPairGenerator.generateKeyPair();
     }
 
-    private String convertKeyToB64(Key key) throws IOException {
+    public String convertKeyToB64(Key key) throws IOException {
         byte[] encodedKey = key.getEncoded();
         return Base64.getEncoder().encodeToString(encodedKey);
     }
 
-    private String writeKeyToB64String(Key key, PemEnum header)
+    public String writeKeyToPEMString(Key key, PemEnum header)
             throws IOException, RuntimeException {
         if (header != PemEnum.PRIVATE_KEY && header != PemEnum.PUBLIC_KEY) {
             throw new RuntimeException(
@@ -58,16 +59,27 @@ public class KeyService {
         return stringWriter.toString();
     }
 
-    private PrivateKey loadPrivKeyFromB64String(String privKeyFile) throws IOException {
+    public PrivateKey loadPrivKeyFromPEMString(String privKeyFile) throws IOException {
         StringReader keyReader = new StringReader(privKeyFile);
         PEMParser pemParser = new PEMParser(keyReader);
         JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
         PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
+        PrivateKey privateKey = converter.getPrivateKey(privateKeyInfo);
 
         return converter.getPrivateKey(privateKeyInfo);
     }
 
-    private String signCertificationRequestInfo(
+    public PublicKey loadPubKeyFromPEMString(String pubKeyFile) throws IOException {
+        StringReader keyReader = new StringReader(pubKeyFile);
+        PEMParser pemParser = new PEMParser(keyReader);
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        SubjectPublicKeyInfo publicKeyInfo =
+                SubjectPublicKeyInfo.getInstance(pemParser.readObject());
+
+        return converter.getPublicKey(publicKeyInfo);
+    }
+
+    public String signCertificationRequestInfo(
             PrivateKey privateKey, PublicKey publicKey, String certReqInfoB64)
             throws InvalidKeyException, NoSuchAlgorithmException, IOException, SignatureException {
         // sign bytes of CERT_REQ_INFO_B64
@@ -78,10 +90,14 @@ public class KeyService {
         signature.update(certificationRequestInfo.getEncoded());
         byte[] resultBytesCertReqInfo = signature.sign();
         // validate the result
-        return verifySignature(signature, certificationRequestInfo.getEncoded(), publicKey, resultBytesCertReqInfo);
+        return verifySignature(
+                signature,
+                certificationRequestInfo.getEncoded(),
+                publicKey,
+                resultBytesCertReqInfo);
     }
 
-    private String signCertificationRequestInfoDigest(
+    public String signCertificationRequestInfoDigest(
             PrivateKey privateKey, PublicKey publicKey, String certReqInfoDigestB64)
             throws InvalidKeyException, NoSuchAlgorithmException, IOException, SignatureException {
         // sign bytes of CERT_REQ_INFO_DIGEST_B64
@@ -92,10 +108,13 @@ public class KeyService {
         signature.update(digestInfo.getDigest());
         byte[] resultBytesCertReqInfoDigest = signature.sign();
         // validate the result
-        return this.verifySignature(signature, digestInfo.getDigest(), publicKey, resultBytesCertReqInfoDigest);
+        return this.verifySignature(
+                signature, digestInfo.getDigest(), publicKey, resultBytesCertReqInfoDigest);
     }
 
-    private String verifySignature(Signature signature, byte[] originalContent, PublicKey publicKey, byte[] signedContent) throws InvalidKeyException, SignatureException {
+    public String verifySignature(
+            Signature signature, byte[] originalContent, PublicKey publicKey, byte[] signedContent)
+            throws InvalidKeyException, SignatureException {
         signature.initVerify(publicKey);
         signature.update(originalContent);
         if (signature.verify(signedContent)) {

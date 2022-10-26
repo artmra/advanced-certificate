@@ -1,10 +1,12 @@
 /* (C)2022 */
 package br.ufsc.labsec.emissoravancado.service;
 
+import br.ufsc.labsec.emissoravancado.components.CNHInfo;
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponse;
 import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,11 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class CNHService {
 
-    @Value("${cnh.verifier}")
     private String uri;
-
     private TesseractService ocrService;
     private PDFBoxService pdfBoxService;
+
+    private final HawaCaService hawaCaService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     {
@@ -31,20 +33,29 @@ public class CNHService {
     }
 
     @Autowired
-    public CNHService(TesseractService ocrService, PDFBoxService pdfBoxService) {
+    public CNHService(
+            TesseractService ocrService,
+            PDFBoxService pdfBoxService,
+            @Value("${cnh.verifier}") String uri,
+            HawaCaService hawaCaService) {
         this.ocrService = ocrService;
         this.pdfBoxService = pdfBoxService;
+        this.uri = uri;
+        this.hawaCaService = hawaCaService;
     }
 
     public void issueAdvancedCertificate(MultipartFile file) {
-        //        VerifierResponse verifierResponse = this.verifyPDF(resource);
+        VerifierResponse verifierResponse = this.verifyPDF(file.getResource());
         try {
             byte[] bytes = file.getBytes();
             List<BufferedImage> pdImages = this.pdfBoxService.extractImages(bytes);
-            this.extractData(pdImages);
+            CNHInfo cnhInfo = this.ocrService.extractData(pdImages);
+            String certificate = this.hawaCaService.issueCertificateWithoutCsr(cnhInfo);
             //            this.pdfBoxService.saveImages(pdImages,
             // resource.getFilename().replace(".pdf", ""));
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
@@ -62,9 +73,5 @@ public class CNHService {
         ResponseEntity<VerifierResponse> response =
                 this.restTemplate.postForEntity(this.uri, request, VerifierResponse.class);
         return response.getBody();
-    }
-
-    private void extractData(List<BufferedImage> images) {
-        this.ocrService.extractData(images);
     }
 }
