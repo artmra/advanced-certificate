@@ -35,3 +35,7 @@ build/
 ### imagens eventualmente geradas
 
 *.png
+
+### jsons eventualmente gerados
+
+*.json
