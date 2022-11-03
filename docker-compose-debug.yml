@@ -1,7 +1,20 @@
+version: '3.9'
 services:
   emissor-avancado-debug:
     image: emissor-avancado:debug
+    environment:
+      - DB_ADDRESS=db-arthur
+      - DB_PORT=3306
+      - SCHEMA_NAME=emissor_avancado
+      - DB_USERNAME=dev
+      - DB_PASSWORD=dev1234
+      - TESSERACT_DATAPATH=/usr/share/tesseract-ocr/4.00/tessdata/
     ports:
       - "8080:8080"
       - "5005:5005"
-    command: java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 -Djava.security.egd=file:/dev/./urandom -jar emissor-avancado.jar
+    networks:
+      - internal-network-emissor-avancado
+    command: java -jar emissor-avancado.jar
+networks:
+  internal-network-emissor-avancado:
+    external: true

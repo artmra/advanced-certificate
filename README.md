@@ -39,12 +39,23 @@ sudo keytool -import -alias "<NOME_INTERNO_DO_CERTIFICADO>" -file <CERTIFICATO_D
 -keystore /usr/java/jdk-11.0.16.1/lib/security/cacerts
 ```
 
-### ARQUIVO application.properties
+### ARQUIVO application.yml
 
-Nessa seção estão disponíveis possíveis valores para as variáveis de ambiente referenciadas no arquivo
+Nessa seção estão disponíveis possíveis valores e explicações para as variáveis de ambiente referenciadas no arquivo
 ```application.properties```.
 
-|  Variável de ambiente  |  Possível Valor  |
-| ---------------------- | ---------------- |
-| CNH_VERIFIER_ADDRESS | https://verificador.iti.gov.br/verifier-2.8.1/report |
-| CNH_VERIFIER_ADDRESS | https://verificador.iti.br/report |
+| Variável de ambiente | Possível Valor                                                           |
+|----------------------|--------------------------------------------------------------------------|
+| VERIFIER_ADDRESS     | https://verificador.iti.gov.br/verifier-2.8.1/report                     |
+| VERIFIER_ADDRESS     | https://verificador.iti.br/report                                        |
+| SERVER_PORT          | qualquer valor                                                           |
+| HAWA_ADDRESS         | qualquer endereço com uma versão do hawa que suporte comunicação sem cmc |
+| CITY                 | qualquer valor                                                           |
+| STATE                | qualquer valor                                                           |
+| RSA_KEY_SIZE         | qualquer tamanho suportado pela versão 1.68 do bouncycastle              |
+| TESSERACT_DATAPATH   | endereço com diretório tessdata do tesseract                             |
+| DB_ADDRESS           | hostname do db mysql a ser utilizado                                     |
+| DB_PORT              | porta do db mysql a ser utilizado                                        |
+| DB_SCHEMA            | nome do esquema da base de dados a ser utilizado                         |
+| DB_USERNAME          | usuário do db com permissões necessárias                                 |
+| DB_PASSWORD          | senha do usuário do db com permissões necessárias                        |

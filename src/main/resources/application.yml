@@ -9,14 +9,16 @@ hawa-ca-service:
   state: ${STATE:SC}
 
 key-service:
-  key-size: ${KEY_SIZE:2048}
-  key-algorithm: ${KEY_ALGORITHM:RSA}
+  key-size: ${RSA_KEY_SIZE:2048}
+  key-algorithm: RSA
 
 verifier-service:
-  address: ${CNH_VERIFIER_ADDRESS:https://pbad.labsec.ufsc.br/verifier-hom/report}
+  address: ${VERIFIER_ADDRESS:https://pbad.labsec.ufsc.br/verifier-hom/report}
 
 tesseract-service:
   datapath: ${TESSERACT_DATAPATH:/usr/share/tesseract/tessdata}
+
+#usr/share/tesseract-ocr/4.00/tessdata/
 
 spring:
   datasource:
