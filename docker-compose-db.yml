@@ -1,0 +1,22 @@
+version: '3.9'
+services:
+  db-arthur:
+    image: docker.io/mysql:5.7
+    container_name: db-emissor-avancado
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_USER=dev
+      - MYSQL_PASSWORD=dev1234
+      - MYSQL_DATABASE=emissor_avancado
+    volumes:
+      - emissor-avancado:/var/lib/mysql
+    ports:
+      - "2900:3306"
+    networks:
+      - internal-network-emissor-avancado
+volumes:
+  emissor-avancado:
+    external: true
+networks:
+  internal-network-emissor-avancado:
+    external: true
