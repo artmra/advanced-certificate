@@ -10,6 +10,7 @@ public class CNHInfo {
     private final String docInfo;
     private final String cpf;
     private final String birthDate;
+    private final String birthData;
     private final String fatherName;
     private final String motherName;
     private final String cnh;

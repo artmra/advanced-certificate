@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import net.sourceforge.tess4j.TesseractException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,20 +32,11 @@ public class CNHService {
         this.hawaCaService = hawaCaService;
     }
 
-    public String issueAdvancedCertificate(MultipartFile file) {
+    public String issueAdvancedCertificate(MultipartFile file)
+            throws NoSuchAlgorithmException, IOException, TesseractException {
         VerifierResponse verifierResponse = this.verifierService.verifyPDF(file.getResource());
-        try {
-            byte[] bytes = file.getBytes();
-            List<BufferedImage> pdImages = this.pdfBoxService.extractImages(bytes);
-            CNHInfo cnhInfo = this.ocrService.extractData(pdImages);
-            String certificate = this.hawaCaService.issueCertificateWithoutCsr(cnhInfo);
-            return certificate;
-            //            this.pdfBoxService.saveImages(pdImages,
-            // resource.getFilename().replace(".pdf", ""));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        List<BufferedImage> pdImages = this.pdfBoxService.extractImages(file.getBytes());
+        CNHInfo cnhInfo = this.ocrService.extractData(pdImages);
+        return this.hawaCaService.issueCertificateWithoutCsr(cnhInfo);
     }
 }

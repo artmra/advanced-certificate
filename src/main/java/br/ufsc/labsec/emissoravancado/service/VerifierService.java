@@ -21,7 +21,12 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class VerifierService {
 
-    private String uri;
+    private final String uri;
+    private static final String VERIFY_INCREMENTAL_UPDATES = "verify_incremental_updates";
+    private static final String EXTENDED_REPORT = "extended_report";
+    private static final String REPORT_TYPE = "report_type";
+    private static final String JSON = "json";
+    private static final String SIGNATURE_FILES = "signature_files[]";
     private final RestTemplate restTemplate = new RestTemplate();
 
     private final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
@@ -39,10 +44,10 @@ public class VerifierService {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         MultiValueMap<String, Object> requestBody = new LinkedMultiValueMap<>();
 
-        requestBody.add("verify_incremental_updates", false);
-        requestBody.add("extended_report", true);
-        requestBody.add("report_type", "json");
-        requestBody.add("signature_files[]", cnh);
+        requestBody.add(VERIFY_INCREMENTAL_UPDATES, false);
+        requestBody.add(EXTENDED_REPORT, true);
+        requestBody.add(REPORT_TYPE, JSON);
+        requestBody.add(SIGNATURE_FILES, cnh);
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response =
                 this.restTemplate.postForEntity(this.uri, request, String.class);

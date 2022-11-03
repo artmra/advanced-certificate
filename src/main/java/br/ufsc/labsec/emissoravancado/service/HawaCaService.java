@@ -12,14 +12,12 @@ import br.ufsc.labsec.valueobject.xmlmapping.submission.CertificateProfileEnum;
 import br.ufsc.labsec.valueobject.xmlmapping.submission.ValidationRequirements;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Base64;
-
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.PEMParser;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,9 +34,7 @@ public class HawaCaService {
     private final String city;
     private final String state;
     private final KeyService keyService;
-
     private final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
-
     private final RestTemplate restTemplate = new RestTemplate();
 
     {
