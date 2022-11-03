@@ -20,7 +20,7 @@ public class TesseractService {
     private final ITesseract instance;
 
     @Autowired
-    public TesseractService(@Value("${tesseract.datapath}") String tesseractDatapath) {
+    public TesseractService(@Value("${tesseract-service.datapath}") String tesseractDatapath) {
         this.tesseractDatapath = tesseractDatapath;
         this.instance = new Tesseract();
         this.instance.setDatapath(this.tesseractDatapath);

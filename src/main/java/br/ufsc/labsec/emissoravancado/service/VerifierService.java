@@ -35,7 +35,7 @@ public class VerifierService {
         restTemplate.setErrorHandler(new VerifierResponseErrorHandler());
     }
 
-    public VerifierService(@Value("${cnh.verifier}") String uri) {
+    public VerifierService(@Value("${verifier-service.address}") String uri) {
         this.uri = uri;
     }
 
