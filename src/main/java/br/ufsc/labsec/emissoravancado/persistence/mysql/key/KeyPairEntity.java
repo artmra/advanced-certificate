@@ -23,4 +23,5 @@ public class KeyPairEntity {
     @Basic
     @Column(name = "b64_encoded_public_key", nullable = false)
     private String b64EncodedPublicKey;
+
 }
