@@ -3,7 +3,10 @@ package br.ufsc.labsec.emissoravancado.persistence.mysql.dossier;
 import javax.persistence.*;
 
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
+import br.ufsc.labsec.emissoravancado.persistence.mysql.document.DocumentEntity;
 import lombok.*;
+
+import java.util.Set;
 
 @Getter
 @Setter
@@ -28,4 +31,7 @@ public class DossierEntity {
 
     @OneToOne(mappedBy = "dossier")
     private CertificateEntity certificate;
+
+    @OneToMany(mappedBy = "dossier")
+    private Set<DocumentEntity> documents;
 }
