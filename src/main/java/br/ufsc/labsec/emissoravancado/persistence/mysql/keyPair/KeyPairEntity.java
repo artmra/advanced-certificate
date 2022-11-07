@@ -1,13 +1,11 @@
 package br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair;
 
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
-import lombok.*;
-
 import javax.persistence.*;
+import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -28,5 +26,4 @@ public class KeyPairEntity {
 
     @OneToOne(mappedBy = "key")
     private CertificateEntity certificate;
-
 }

@@ -20,16 +20,15 @@ public class PDFBoxService {
     public List<BufferedImage> extractImages(byte[] cnhBytes) throws IOException {
         List<BufferedImage> images = new ArrayList<>();
         PDDocument cnh = PDDocument.load(cnhBytes);
-        for (PDPage page: cnh.getPages()) {
+        for (PDPage page : cnh.getPages()) {
             PDResources resources = page.getResources();
-            for (COSName name: resources.getXObjectNames()) {
+            for (COSName name : resources.getXObjectNames()) {
                 PDXObject xObject = resources.getXObject(name);
                 if (xObject instanceof PDImageXObject) {
                     PDImageXObject pdfImage = (PDImageXObject) xObject;
                     images.add(pdfImage.getImage());
                 }
             }
-
         }
         cnh.close();
         return images;

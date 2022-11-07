@@ -1,16 +1,12 @@
 package br.ufsc.labsec.emissoravancado.persistence.mysql.client;
 
-import javax.persistence.*;
-
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
-import br.ufsc.labsec.emissoravancado.persistence.mysql.dossier.DossierEntity;
-import lombok.*;
-
 import java.util.Set;
+import javax.persistence.*;
+import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity

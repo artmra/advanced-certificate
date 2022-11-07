@@ -1,16 +1,13 @@
 package br.ufsc.labsec.emissoravancado.persistence.mysql.dossier;
 
-import javax.persistence.*;
-
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.document.DocumentEntity;
-import lombok.*;
-
 import java.util.Set;
+import javax.persistence.*;
+import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -26,7 +23,7 @@ public class DossierEntity {
     private String xml;
 
     @Basic
-    @Column(name = "b64_signature",  nullable = false)
+    @Column(name = "b64_signature", nullable = false)
     private String b64Signature;
 
     @OneToOne(mappedBy = "dossier")

@@ -27,6 +27,7 @@ public class CNHController {
         if (file.isEmpty()) {
             // todo: loggar erro e retornar algo
         }
+        file.getResource();
         String s = this.cnhService.issueAdvancedCertificate(file);
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)
@@ -43,4 +44,17 @@ public class CNHController {
     @SneakyThrows
     @PostMapping("/get-cert")
     public void getCertificate() {}
+
+    @SneakyThrows
+    @GetMapping("/get-cnh")
+    public ResponseEntity<byte[]> getCnh(@RequestParam("serial-number") String serialNumber) {
+
+        byte[] fileBytes = new byte[0];
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(MediaType.APPLICATION_PDF_VALUE))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + "imagine-um-cert.pdf" + "\"")
+                .body(fileBytes);
+    }
 }
