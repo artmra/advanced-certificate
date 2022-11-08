@@ -18,6 +18,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 @Service
 public class VerifierService {
 
@@ -51,14 +53,46 @@ public class VerifierService {
         HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response =
                 this.restTemplate.postForEntity(this.uri, request, String.class);
+        VerifierResponse verifierResponseFromJson = getVerifierResponseFromJson(response.getBody());
+        checkSignatureAndValidity(verifierResponseFromJson);
+        return verifierResponseFromJson;
+    }
+
+    public VerifierResponse getVerifierResponseFromJson(String json) {
         VerifierResponse verifierResponse;
         try {
             verifierResponse =
-                    GSON.fromJson(response.getBody(), VerifierResponseWithMultiSubAltName.class);
+                    GSON.fromJson(json, VerifierResponseWithMultiSubAltName.class);
         } catch (JsonSyntaxException ex) {
             verifierResponse =
-                    GSON.fromJson(response.getBody(), VerifierResponseWithSingleSubAltName.class);
+                    GSON.fromJson(json, VerifierResponseWithSingleSubAltName.class);
         }
         return verifierResponse;
+    }
+
+    public void checkSignatureAndValidity(VerifierResponse verifierResponse) {
+        if (verifierResponse instanceof VerifierResponseWithMultiSubAltName) {
+            var parsedResponse = (VerifierResponseWithMultiSubAltName) verifierResponse;
+            List<VerifierResponseWithMultiSubAltName.ReportCertificate> certificates = parsedResponse.getReport().getSignatures().getSignature().getCertification().getSigner().getCertificate();
+            for (var certificate: certificates) {
+                if (!certificate.isValidSignature())
+                    throw new RuntimeException("A cadeia de certificação possui um certificado com assinatura inválida");
+                if (certificate.isExpired())
+                    throw new RuntimeException("A cadeia de certificação possui um certificado expirado");
+                if (certificate.isRevoked())
+                    throw new RuntimeException("A cadeia de certificação possui um certificado revogado");
+            }
+            return;
+        }
+        var parsedResponse = (VerifierResponseWithSingleSubAltName) verifierResponse;
+        List<VerifierResponseWithSingleSubAltName.ReportCertificate> certificates = parsedResponse.getReport().getSignatures().getSignature().getCertification().getSigner().getCertificate();
+        for (var certificate: certificates) {
+            if (!certificate.isValidSignature())
+                throw new RuntimeException("A cadeia de certificação possui um certificado com assinatura inválida");
+            if (certificate.isExpired())
+                throw new RuntimeException("A cadeia de certificação possui um certificado expirado");
+            if (certificate.isRevoked())
+                throw new RuntimeException("A cadeia de certificação possui um certificado revogado");
+        }
     }
 }

@@ -23,8 +23,8 @@ public class CertificateEntity {
     private String serialNumber;
 
     @Basic
-    @Column(name = "pem", nullable = false)
-    private String pem;
+    @Column(name = "b64Cert", nullable = false)
+    private String b64Cert;
 
     @Basic
     @Column(name = "revoked", nullable = false)

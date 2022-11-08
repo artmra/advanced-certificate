@@ -74,7 +74,7 @@ public class HawaCaService {
         return certificateApplicationDTO;
     }
 
-    public String issueCertificateWithoutCsr(CNHInfo cnhInfo)
+    public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo)
             throws NoSuchAlgorithmException, IOException {
         KeyPair keyPair = keyService.generateKeyPair();
         PublicKey publicKey = keyPair.getPublic();
@@ -89,17 +89,19 @@ public class HawaCaService {
                         request,
                         CertificateResponse.class);
 
-        return convertCertPEMToB64(response.getBody());
+        return response.getBody();
     }
 
-    private String convertCertPEMToB64(CertificateResponse certificateResponse) throws IOException {
+    public String convertCertPEMToB64(X509CertificateHolder certificateHolder) throws IOException {
+        return Base64.getEncoder().encodeToString(certificateHolder.getEncoded());
+    }
+
+    public X509CertificateHolder convertResponseToCertHolder(CertificateResponse certificateResponse) throws IOException {
         ByteArrayInputStream pemStream =
                 new ByteArrayInputStream(
                         certificateResponse.getCertificatePem().getBytes(StandardCharsets.UTF_8));
-
         Reader pemReader = new BufferedReader(new InputStreamReader(pemStream));
         PEMParser pemParser = new PEMParser(pemReader);
-        X509CertificateHolder certificateHolder = (X509CertificateHolder) pemParser.readObject();
-        return Base64.getEncoder().encodeToString(certificateHolder.getEncoded());
+        return  (X509CertificateHolder) pemParser.readObject();
     }
 }

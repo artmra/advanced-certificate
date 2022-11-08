@@ -1,6 +1,7 @@
 /* (C)2022 */
 package br.ufsc.labsec.emissoravancado.controller;
 
+import br.ufsc.labsec.emissoravancado.dto.response.CNHServiceResponse;
 import br.ufsc.labsec.emissoravancado.service.CNHService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,18 +24,14 @@ public class CNHController {
 
     @SneakyThrows
     @PostMapping("/issue")
-    public ResponseEntity<String> issueCertificate(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<CNHServiceResponse> issueCertificate(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             // todo: loggar erro e retornar algo
         }
-        file.getResource();
-        String s = this.cnhService.issueAdvancedCertificate(file);
+        CNHServiceResponse cnhServiceResponse = this.cnhService.issueAdvancedCertificate(file);
         return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + "imagine-um-cert.pdf" + "\"")
-                .body(s);
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(cnhServiceResponse);
     }
 
     @SneakyThrows
