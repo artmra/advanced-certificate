@@ -3,7 +3,10 @@ package br.ufsc.labsec.emissoravancado.service;
 import br.ufsc.labsec.emissoravancado.components.CNHInfo;
 import br.ufsc.labsec.emissoravancado.components.enums.HawaCaEndpoints;
 import br.ufsc.labsec.emissoravancado.exception.handlers.VerifierResponseErrorHandler;
+import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
 import br.ufsc.labsec.valueobject.crypto.noncmc.CertificateResponse;
+import br.ufsc.labsec.valueobject.crypto.noncmc.RevocationRequestNoCmc;
+import br.ufsc.labsec.valueobject.crypto.noncmc.RevocationResponse;
 import br.ufsc.labsec.valueobject.dto.CertificateApplicationDTO;
 import br.ufsc.labsec.valueobject.dto.NoCsrIssuingRequest;
 import br.ufsc.labsec.valueobject.xmlmapping.submission.CertificateIntentionEnum;
@@ -15,6 +18,7 @@ import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Date;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.PEMParser;
 import org.springframework.beans.factory.annotation.Value;
@@ -71,6 +75,18 @@ public class HawaCaService {
         return certificateApplicationDTO;
     }
 
+    private RevocationRequestNoCmc createNoCmcRevocationRequest(CertificateEntity certificate) {
+        RevocationRequestNoCmc revocationRequestNoCmc = new RevocationRequestNoCmc();
+        revocationRequestNoCmc.setDate(new Date().getTime());
+        revocationRequestNoCmc.setSerialNumber(certificate.getSerialNumber());
+        revocationRequestNoCmc.setComment(
+                "Certificado revogado através do uso do endpoint de revogação da API do Emissor"
+                        + " Avancado");
+        revocationRequestNoCmc.setReason(0);
+        revocationRequestNoCmc.setIssuerName("Emissor Avancado");
+        return revocationRequestNoCmc;
+    }
+
     public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo, String b64PubKey) {
         NoCsrIssuingRequest noCsrIssuingRequest = createNoCsrIssuingRequest(cnhInfo, b64PubKey);
         HttpHeaders headers = new HttpHeaders();
@@ -81,6 +97,20 @@ public class HawaCaService {
                         this.hawaAddress.concat(HawaCaEndpoints.NO_CMC_SIGN_NO_CSR.getEndpoint()),
                         request,
                         CertificateResponse.class);
+
+        return response.getBody();
+    }
+
+    public RevocationResponse revokeCertificate(CertificateEntity certificate) {
+        RevocationRequestNoCmc noCmcRevocationRequest = createNoCmcRevocationRequest(certificate);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(GSON.toJson(noCmcRevocationRequest), headers);
+        ResponseEntity<RevocationResponse> response =
+                this.restTemplate.postForEntity(
+                        this.hawaAddress.concat(HawaCaEndpoints.NO_CMC_REVOKE.getEndpoint()),
+                        request,
+                        RevocationResponse.class);
 
         return response.getBody();
     }

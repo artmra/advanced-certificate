@@ -16,6 +16,7 @@ import br.ufsc.labsec.emissoravancado.persistence.mysql.dossier.DossierRepositor
 import br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair.KeyPairEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair.KeyPairRepository;
 import br.ufsc.labsec.valueobject.crypto.noncmc.CertificateResponse;
+import br.ufsc.labsec.valueobject.crypto.noncmc.RevocationResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -53,8 +54,12 @@ public class CNHService {
     private final KeyPairRepository keyPairRepository;
     private final HawaCaService hawaCaService;
     private static final String FILENAME_TEMPLATE = "%s-%s";
-    private static final String DOCUMENT_NOT_FOUND = "Erro ao encontrar o documento do tipo solicitado associado ao certificado emitido";
-    private static final String DOCUMENT_CANNOT_BE_CONVERTED = "O tipo de documento informado não pode ser convertido para JSON";
+    private static final String DOCUMENT_NOT_FOUND =
+            "Erro ao encontrar o documento do tipo solicitado associado ao certificado emitido";
+    private static final String DOCUMENT_CANNOT_BE_CONVERTED =
+            "O tipo de documento informado não pode ser convertido para JSON";
+    private static final String FAILED_TO_REVOKE = "Falha ao revogar o certificado";
+
     @Autowired
     public CNHService(
             TesseractService ocrService,
@@ -147,14 +152,15 @@ public class CNHService {
         // persiste chave
         keyPair = this.keyPairRepository.save(keyPair);
         // persiste certificado
-        CertificateEntity certificate = this.certificateRepository.save(
-                new CertificateEntity(
-                        certB64,
-                        false,
-                        certificateHolder.getSerialNumber().toString(),
-                        client,
-                        dossier,
-                        keyPair));
+        CertificateEntity certificate =
+                this.certificateRepository.save(
+                        new CertificateEntity(
+                                certB64,
+                                false,
+                                certificateHolder.getSerialNumber().toString(),
+                                client,
+                                dossier,
+                                keyPair));
         // atualiza a coluna lastSerialNumber do usuário
         client.setLastCertificateSerialNumber(certificateHolder.getSerialNumber().toString());
         this.clientRepository.save(client);
@@ -176,7 +182,7 @@ public class CNHService {
 
     public DocumentEntity getDocument(String serialNumber, DocumentTypeEnum documentType) {
         DossierEntity dossier = getDossier(serialNumber);
-        for (var document: dossier.getDocuments()) {
+        for (var document : dossier.getDocuments()) {
             if (DocumentTypeEnum.valueOf(document.getDocumentType()) == documentType) {
                 return document;
             }
@@ -194,5 +200,15 @@ public class CNHService {
             throw new InternalErrorException(DOCUMENT_CANNOT_BE_CONVERTED);
         DocumentEntity document = getDocument(serialNumber, documentType);
         return this.documentEncodeAndDecodeService.loadJsonFromB64(document);
+    }
+
+    public CertificateEntity revoke(String serialNumber) {
+        CertificateEntity certificate = getIssuedCertificate(serialNumber);
+        RevocationResponse revocationResponse = this.hawaCaService.revokeCertificate(certificate);
+        if (revocationResponse.isSuccess()) {
+            certificate.setRevoked(true);
+            return this.certificateRepository.save(certificate);
+        }
+        throw new InternalErrorException(FAILED_TO_REVOKE);
     }
 }

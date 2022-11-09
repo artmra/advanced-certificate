@@ -2,6 +2,7 @@
 package br.ufsc.labsec.emissoravancado.controller;
 
 import br.ufsc.labsec.emissoravancado.dto.response.CNHServiceIssueResponse;
+import br.ufsc.labsec.emissoravancado.dto.response.CNHServiceRevokeResponse;
 import br.ufsc.labsec.emissoravancado.dto.response.SimpleMessageResponse;
 import br.ufsc.labsec.emissoravancado.exception.errors.FileMissingException;
 import br.ufsc.labsec.emissoravancado.exception.errors.InternalErrorException;
@@ -16,6 +17,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+import java.util.Date;
 import java.util.NoSuchElementException;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.XMLSignatureException;
@@ -62,20 +64,36 @@ public class CNHController {
             throw new FileMissingException(FILE_MISSING);
         }
         CertificateEntity certificate = this.cnhService.issueAdvancedCertificate(file);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(new CNHServiceIssueResponse(certificate.getB64Cert(), certificate.getSerialNumber()));
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new CNHServiceIssueResponse(
+                                certificate.getB64Cert(), certificate.getSerialNumber()));
     }
 
     @PostMapping("/revoke")
-    public void revokeCertificate() {}
+    public ResponseEntity<CNHServiceRevokeResponse> revokeCertificate(
+            @RequestParam("serial-number") String serialNumber) {
+        CertificateEntity revokedCertificate = this.cnhService.revoke(serialNumber);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CNHServiceRevokeResponse(true, serialNumber, new Date()));
+    }
 
     @GetMapping("/get-cert")
-    public ResponseEntity<CNHServiceIssueResponse> getCertificate(@RequestParam("serial-number") String serialNumber) {
+    public ResponseEntity<CNHServiceIssueResponse> getCertificate(
+            @RequestParam("serial-number") String serialNumber) {
         CertificateEntity certificate = this.cnhService.getIssuedCertificate(serialNumber);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(new CNHServiceIssueResponse(certificate.getB64Cert(), certificate.getSerialNumber()));
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(
+                        new CNHServiceIssueResponse(
+                                certificate.getB64Cert(), certificate.getSerialNumber()));
     }
 
     @GetMapping("/get-cnh")
-    public ResponseEntity<byte[]> getCnh(@RequestParam("serial-number") String serialNumber) throws InternalErrorException {
+    public ResponseEntity<byte[]> getCnh(@RequestParam("serial-number") String serialNumber)
+            throws InternalErrorException {
         byte[] cnhPdf = this.cnhService.getCnhPdf(serialNumber);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_PDF_VALUE))
@@ -86,23 +104,28 @@ public class CNHController {
     }
 
     @GetMapping("/get-verifier-response")
-    public ResponseEntity<String> getVerifierResponse(@RequestParam("serial-number") String serialNumber) throws InternalErrorException {
-        String verifierResponse = this.cnhService.getDocumentJson(serialNumber, DocumentTypeEnum.VERIFIER_REPORT);
+    public ResponseEntity<String> getVerifierResponse(
+            @RequestParam("serial-number") String serialNumber) throws InternalErrorException {
+        String verifierResponse =
+                this.cnhService.getDocumentJson(serialNumber, DocumentTypeEnum.VERIFIER_REPORT);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE))
                 .body(verifierResponse);
     }
 
     @GetMapping("/get-extracted-cnh-info")
-    public ResponseEntity<String> getExtractedCnhInfo(@RequestParam("serial-number") String serialNumber) throws InternalErrorException {
-        String verifierResponse = this.cnhService.getDocumentJson(serialNumber, DocumentTypeEnum.EXTRACTED_CNH_INFO);
+    public ResponseEntity<String> getExtractedCnhInfo(
+            @RequestParam("serial-number") String serialNumber) throws InternalErrorException {
+        String verifierResponse =
+                this.cnhService.getDocumentJson(serialNumber, DocumentTypeEnum.EXTRACTED_CNH_INFO);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_JSON_VALUE))
                 .body(verifierResponse);
     }
 
     @GetMapping("/get-dossier")
-    public ResponseEntity<String> getDossier(@RequestParam("serial-number") String serialNumber) throws InternalErrorException {
+    public ResponseEntity<String> getDossier(@RequestParam("serial-number") String serialNumber)
+            throws InternalErrorException {
         DossierEntity dossier = this.cnhService.getDossier(serialNumber);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(MediaType.APPLICATION_XML_VALUE))
