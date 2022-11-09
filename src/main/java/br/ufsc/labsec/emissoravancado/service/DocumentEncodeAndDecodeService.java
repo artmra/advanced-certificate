@@ -53,23 +53,26 @@ public class DocumentEncodeAndDecodeService {
     }
 
     public File loadCNHFileFromB64(DocumentEntity document) throws IOException {
-        DocumentTypeEnum documentTypeEnum = DocumentTypeEnum.valueOf(document.getDocumentType());
-        if (documentTypeEnum != DocumentTypeEnum.CNH)
-            throw new RuntimeException("Tipo de documento inválido");
-        byte[] documentBytes = B64_DECODER.decode(document.getB64Encoded());
+        byte[] documentBytes = getCNHFileBytesFromB64(document);
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(documentBytes);
         Path tempFile =
                 Files.createTempFile(
-                        document.getFilename(), DocumentTypeEnum.getFileSufix(documentTypeEnum));
+                        document.getFilename(), DocumentTypeEnum.getFileSufix(DocumentTypeEnum.valueOf(document.getDocumentType())));
         File file = new File(tempFile.toUri());
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         IOUtils.copy(byteArrayInputStream, fileOutputStream);
         return file;
     }
 
+    public byte[] getCNHFileBytesFromB64(DocumentEntity document) {
+        if (DocumentTypeEnum.valueOf(document.getDocumentType()) != DocumentTypeEnum.CNH)
+            throw new RuntimeException("Tipo de documento inválido");
+        return B64_DECODER.decode(document.getB64Encoded());
+    }
+
     public String loadJsonFromB64(DocumentEntity document) {
         DocumentTypeEnum documentTypeEnum = DocumentTypeEnum.valueOf(document.getDocumentType());
-        if (documentTypeEnum == DocumentTypeEnum.CNH_INFO
+        if (documentTypeEnum == DocumentTypeEnum.EXTRACTED_CNH_INFO
                 || documentTypeEnum == DocumentTypeEnum.VERIFIER_REPORT) {
             byte[] decodedDocumentBytes = B64_DECODER.decode(document.getB64Encoded());
             return new String(decodedDocumentBytes);

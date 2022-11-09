@@ -1,5 +1,7 @@
-package br.ufsc.labsec.emissoravancado.errorHandlers;
+package br.ufsc.labsec.emissoravancado.exception.handlers;
 
+import br.ufsc.labsec.emissoravancado.exception.errors.InternalErrorException;
+import br.ufsc.labsec.emissoravancado.exception.errors.VerifierUnavailableException;
 import java.io.IOException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
@@ -15,13 +17,10 @@ public class VerifierResponseErrorHandler implements ResponseErrorHandler {
     @Override
     public void handleError(ClientHttpResponse response) throws IOException {
         if (response.getStatusCode().series() == HttpStatus.Series.SERVER_ERROR) {
-            // todo: tratar error de maneira mais elegante
-            throw new RuntimeException("Erro interno");
+            throw new InternalErrorException("Erro interno");
         } else if (response.getStatusCode().series() == HttpStatus.Series.CLIENT_ERROR) {
-            // todo: tratar error de maneira mais elegante
             if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
-                // todo: tratar error de maneira mais elegante
-                throw new RuntimeException("Falha ao se comunicar com o verificador");
+                throw new VerifierUnavailableException("Falha ao se comunicar com o verificador");
             }
         }
     }

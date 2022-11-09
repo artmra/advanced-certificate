@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum DocumentTypeEnum {
     CNH("CNH"),
     VERIFIER_REPORT("VERIFIER_REPORT"),
-    CNH_INFO("EXTRACTED_CNH_INFO");
+    EXTRACTED_CNH_INFO("EXTRACTED_CNH_INFO");
 
     private final String documentType;
 
@@ -16,7 +16,7 @@ public enum DocumentTypeEnum {
         switch (documentTypeEnum) {
             case CNH:
                 return ".pdf";
-            case CNH_INFO:
+            case EXTRACTED_CNH_INFO:
             case VERIFIER_REPORT:
                 return ".json";
             default:

@@ -3,7 +3,7 @@ package br.ufsc.labsec.emissoravancado.service;
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponse;
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponseWithMultiSubAltName;
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponseWithSingleSubAltName;
-import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
+import br.ufsc.labsec.emissoravancado.exception.handlers.VerifierResponseErrorHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;

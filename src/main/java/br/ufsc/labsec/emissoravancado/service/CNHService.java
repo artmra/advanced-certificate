@@ -2,8 +2,8 @@
 package br.ufsc.labsec.emissoravancado.service;
 
 import br.ufsc.labsec.emissoravancado.components.CNHInfo;
-import br.ufsc.labsec.emissoravancado.dto.response.CNHServiceResponse;
 import br.ufsc.labsec.emissoravancado.dto.response.VerifierResponse;
+import br.ufsc.labsec.emissoravancado.exception.errors.InternalErrorException;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateRepository;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.client.ClientEntity;
@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.XMLSignatureException;
@@ -39,20 +40,21 @@ import org.xml.sax.SAXException;
 @Service
 public class CNHService {
 
-    private TesseractService ocrService;
-    private PDFBoxService pdfBoxService;
-    private VerifierService verifierService;
-    private KeyService keyService;
-    private DossierSignerService dossierSignerService;
-    private DocumentEncodeAndDecodeService documentEncodeAndDecodeService;
-    private ClientRepository clientRepository;
-    private DocumentRepository documentRepository;
-    private CertificateRepository certificateRepository;
-    private DossierRepository dossierRepository;
-    private KeyPairRepository keyPairRepository;
+    private final TesseractService ocrService;
+    private final PDFBoxService pdfBoxService;
+    private final VerifierService verifierService;
+    private final KeyService keyService;
+    private final DossierSignerService dossierSignerService;
+    private final DocumentEncodeAndDecodeService documentEncodeAndDecodeService;
+    private final ClientRepository clientRepository;
+    private final DocumentRepository documentRepository;
+    private final CertificateRepository certificateRepository;
+    private final DossierRepository dossierRepository;
+    private final KeyPairRepository keyPairRepository;
     private final HawaCaService hawaCaService;
     private static final String FILENAME_TEMPLATE = "%s-%s";
-
+    private static final String DOCUMENT_NOT_FOUND = "Erro ao encontrar o documento do tipo solicitado associado ao certificado emitido";
+    private static final String DOCUMENT_CANNOT_BE_CONVERTED = "O tipo de documento informado não pode ser convertido para JSON";
     @Autowired
     public CNHService(
             TesseractService ocrService,
@@ -81,7 +83,7 @@ public class CNHService {
         this.hawaCaService = hawaCaService;
     }
 
-    public CNHServiceResponse issueAdvancedCertificate(MultipartFile file)
+    public CertificateEntity issueAdvancedCertificate(MultipartFile file)
             throws IOException, TesseractException, NoSuchAlgorithmException,
                     ParserConfigurationException, TransformerException, MarshalException,
                     InvalidAlgorithmParameterException, UnrecoverableEntryException,
@@ -122,46 +124,75 @@ public class CNHService {
         // persiste dossie
         DossierEntity dossier = this.dossierRepository.save(new DossierEntity(signedXml));
         // persiste documentos
-        DocumentEntity cnhPdfDoc =
-                this.documentRepository.save(
-                        new DocumentEntity(
-                                cnhB64,
-                                DocumentTypeEnum.CNH,
-                                extratedCnhInfo.createFilename(
-                                        FILENAME_TEMPLATE, DocumentTypeEnum.CNH),
-                                dossier));
-        DocumentEntity extractedInfoDoc =
-                this.documentRepository.save(
-                        new DocumentEntity(
-                                extractedCnhInfoB64,
-                                DocumentTypeEnum.CNH_INFO,
-                                extratedCnhInfo.createFilename(
-                                        FILENAME_TEMPLATE, DocumentTypeEnum.CNH_INFO),
-                                dossier));
-        DocumentEntity verifierResponseDoc =
-                this.documentRepository.save(
-                        new DocumentEntity(
-                                verifierResponseB64,
-                                DocumentTypeEnum.VERIFIER_REPORT,
-                                extratedCnhInfo.createFilename(
-                                        FILENAME_TEMPLATE, DocumentTypeEnum.VERIFIER_REPORT),
-                                dossier));
+        this.documentRepository.save(
+                new DocumentEntity(
+                        cnhB64,
+                        DocumentTypeEnum.CNH,
+                        extratedCnhInfo.createFilename(FILENAME_TEMPLATE, DocumentTypeEnum.CNH),
+                        dossier));
+        this.documentRepository.save(
+                new DocumentEntity(
+                        extractedCnhInfoB64,
+                        DocumentTypeEnum.EXTRACTED_CNH_INFO,
+                        extratedCnhInfo.createFilename(
+                                FILENAME_TEMPLATE, DocumentTypeEnum.EXTRACTED_CNH_INFO),
+                        dossier));
+        this.documentRepository.save(
+                new DocumentEntity(
+                        verifierResponseB64,
+                        DocumentTypeEnum.VERIFIER_REPORT,
+                        extratedCnhInfo.createFilename(
+                                FILENAME_TEMPLATE, DocumentTypeEnum.VERIFIER_REPORT),
+                        dossier));
         // persiste chave
         keyPair = this.keyPairRepository.save(keyPair);
         // persiste certificado
-        CertificateEntity certificate =
-                this.certificateRepository.save(
-                        new CertificateEntity(
-                                certB64,
-                                false,
-                                certificateHolder.getSerialNumber().toString(),
-                                client,
-                                dossier,
-                                keyPair));
+        CertificateEntity certificate = this.certificateRepository.save(
+                new CertificateEntity(
+                        certB64,
+                        false,
+                        certificateHolder.getSerialNumber().toString(),
+                        client,
+                        dossier,
+                        keyPair));
         // atualiza a coluna lastSerialNumber do usuário
         client.setLastCertificateSerialNumber(certificateHolder.getSerialNumber().toString());
-        ClientEntity save = this.clientRepository.save(client);
-        // cria objeto de resposta e retorna o certificado
-        return new CNHServiceResponse(certB64, certificateHolder.getSerialNumber().toString());
+        this.clientRepository.save(client);
+        // retorna o certificado emitido
+        return certificate;
+    }
+
+    public CertificateEntity getIssuedCertificate(String serialNumber)
+            throws NoSuchElementException {
+        Optional<CertificateEntity> bySerialNumber =
+                this.certificateRepository.findBySerialNumber(serialNumber);
+        return bySerialNumber.orElseThrow();
+    }
+
+    public DossierEntity getDossier(String serialNumber) {
+        CertificateEntity issuedCertificate = getIssuedCertificate(serialNumber);
+        return issuedCertificate.getDossier();
+    }
+
+    public DocumentEntity getDocument(String serialNumber, DocumentTypeEnum documentType) {
+        DossierEntity dossier = getDossier(serialNumber);
+        for (var document: dossier.getDocuments()) {
+            if (DocumentTypeEnum.valueOf(document.getDocumentType()) == documentType) {
+                return document;
+            }
+        }
+        throw new InternalErrorException(DOCUMENT_NOT_FOUND);
+    }
+
+    public byte[] getCnhPdf(String serialNumber) {
+        DocumentEntity document = getDocument(serialNumber, DocumentTypeEnum.CNH);
+        return this.documentEncodeAndDecodeService.getCNHFileBytesFromB64(document);
+    }
+
+    public String getDocumentJson(String serialNumber, DocumentTypeEnum documentType) {
+        if (documentType == DocumentTypeEnum.CNH)
+            throw new InternalErrorException(DOCUMENT_CANNOT_BE_CONVERTED);
+        DocumentEntity document = getDocument(serialNumber, documentType);
+        return this.documentEncodeAndDecodeService.loadJsonFromB64(document);
     }
 }

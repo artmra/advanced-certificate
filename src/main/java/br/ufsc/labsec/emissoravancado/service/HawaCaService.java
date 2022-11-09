@@ -2,7 +2,7 @@ package br.ufsc.labsec.emissoravancado.service;
 
 import br.ufsc.labsec.emissoravancado.components.CNHInfo;
 import br.ufsc.labsec.emissoravancado.components.enums.HawaCaEndpoints;
-import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler;
+import br.ufsc.labsec.emissoravancado.exception.handlers.VerifierResponseErrorHandler;
 import br.ufsc.labsec.valueobject.crypto.noncmc.CertificateResponse;
 import br.ufsc.labsec.valueobject.dto.CertificateApplicationDTO;
 import br.ufsc.labsec.valueobject.dto.NoCsrIssuingRequest;
@@ -14,7 +14,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.PEMParser;
@@ -72,8 +71,7 @@ public class HawaCaService {
         return certificateApplicationDTO;
     }
 
-    public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo, String b64PubKey)
-            throws NoSuchAlgorithmException, IOException {
+    public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo, String b64PubKey) {
         NoCsrIssuingRequest noCsrIssuingRequest = createNoCsrIssuingRequest(cnhInfo, b64PubKey);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

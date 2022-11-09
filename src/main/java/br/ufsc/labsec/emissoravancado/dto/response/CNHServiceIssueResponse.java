@@ -9,7 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter
 @Getter
-public class CNHServiceResponse {
+public class CNHServiceIssueResponse {
     private String certB64;
     private String certSerialNumber;
 }
