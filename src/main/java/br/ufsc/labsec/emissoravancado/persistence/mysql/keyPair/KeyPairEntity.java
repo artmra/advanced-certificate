@@ -2,26 +2,30 @@ package br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair;
 
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
 import java.io.Serializable;
+import java.util.Objects;
 import javax.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "key_pair")
+@Table(name = "key_pair", schema = "emissor_avancado", catalog = "")
 public class KeyPairEntity implements Serializable {
-    @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
     @Column(name = "id", nullable = false)
-    private Long id;
+    private long id;
 
     @Basic
+    @Lob
     @Column(name = "b64_private_key", nullable = false)
     private String b64PrivateKey;
 
     @Basic
+    @Lob
     @Column(name = "b64_public_key", nullable = false)
     private String b64PublicKey;
 
@@ -31,5 +35,20 @@ public class KeyPairEntity implements Serializable {
     public KeyPairEntity(String b64PrivateKey, String b64PublicKey) {
         this.b64PrivateKey = b64PrivateKey;
         this.b64PublicKey = b64PublicKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KeyPairEntity that = (KeyPairEntity) o;
+        return id == that.id
+                && Objects.equals(b64PrivateKey, that.b64PrivateKey)
+                && Objects.equals(b64PublicKey, that.b64PublicKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, b64PrivateKey, b64PublicKey);
     }
 }

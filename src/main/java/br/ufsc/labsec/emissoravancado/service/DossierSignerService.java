@@ -2,15 +2,16 @@ package br.ufsc.labsec.emissoravancado.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.*;
 import javax.xml.crypto.dsig.dom.DOMSignContext;
 import javax.xml.crypto.dsig.keyinfo.KeyInfo;
@@ -26,12 +27,12 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 @Service
 public class DossierSignerService {
@@ -57,7 +58,7 @@ public class DossierSignerService {
             @Value("${dossier-service.key-entry-password}") String keyEntryPassword,
             @Value("${dossier-service.key-entry}") String keyEntry,
             @Value("${dossier-service.key-store-password}") String keyStorePassword,
-    @Value("${verifier-service.address}") String verifierAddress) {
+            @Value("${verifier-service.address}") String verifierAddress) {
         this.keyStoreFilename = keyStoreFilename;
         this.keyStorePassword = keyStorePassword;
         this.keyEntry = keyEntry;
@@ -65,21 +66,29 @@ public class DossierSignerService {
         this.verifierAddress = verifierAddress;
     }
 
-    public String createBaseDossier(String extractedcnhInfoB64, String cnhPdfB64, String verifierB64, String certB64) throws ParserConfigurationException, TransformerException, NoSuchAlgorithmException {
+    public String createBaseDossier(
+            String extractedcnhInfoB64, String cnhPdfB64, String verifierB64, String certB64)
+            throws ParserConfigurationException, TransformerException, NoSuchAlgorithmException {
         DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
         Document document = documentBuilder.newDocument();
 
         Element documentsB64 = document.createElement(DOCUMENTS_KEY);
 
-        documentsB64.appendChild(createElement(document, PDF_CNH_B64_SHA_265_KEY, digestValue(cnhPdfB64)));
-        documentsB64.appendChild(createElement(document, EXTRACTED_CNH_INFO_B64_SHA_265_KEY, digestValue(extractedcnhInfoB64)));
+        documentsB64.appendChild(
+                createElement(document, PDF_CNH_B64_SHA_265_KEY, digestValue(cnhPdfB64)));
+        documentsB64.appendChild(
+                createElement(
+                        document,
+                        EXTRACTED_CNH_INFO_B64_SHA_265_KEY,
+                        digestValue(extractedcnhInfoB64)));
         documentsB64.appendChild(createElement(document, CERT_B64_SHA_265_KEY, certB64));
 
         Element verifierElement = document.createElement(VERIFIER_KEY);
 
         verifierElement.appendChild(createElement(document, VERIFIER_ADDRESS_KEY, verifierAddress));
-        verifierElement.appendChild(createElement(document, VERIFIER_REPORT_B64_SHA_265_KEY, digestValue(verifierB64)));
+        verifierElement.appendChild(
+                createElement(document, VERIFIER_REPORT_B64_SHA_265_KEY, digestValue(verifierB64)));
 
         documentsB64.appendChild(verifierElement);
 
@@ -109,7 +118,10 @@ public class DossierSignerService {
     }
 
     public String sign(String dossierXml)
-            throws Exception {
+            throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, KeyStoreException,
+                    IOException, CertificateException, UnrecoverableEntryException,
+                    ParserConfigurationException, SAXException, MarshalException,
+                    XMLSignatureException, TransformerException {
         XMLSignatureFactory fac = XMLSignatureFactory.getInstance(DOM);
         Reference ref =
                 fac.newReference(
@@ -133,7 +145,8 @@ public class DossierSignerService {
         KeyStore.PrivateKeyEntry keyEntry =
                 (KeyStore.PrivateKeyEntry)
                         keyStore.getEntry(
-                                this.keyEntry, new KeyStore.PasswordProtection(keyEntryPassword.toCharArray()));
+                                this.keyEntry,
+                                new KeyStore.PasswordProtection(keyEntryPassword.toCharArray()));
         X509Certificate cert = (X509Certificate) keyEntry.getCertificate();
 
         KeyInfoFactory keyInfoFactory = fac.getKeyInfoFactory();
@@ -145,9 +158,13 @@ public class DossierSignerService {
 
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         documentBuilderFactory.setNamespaceAware(true);
-        Document document = documentBuilderFactory.newDocumentBuilder().parse(IOUtils.toInputStream(dossierXml, StandardCharsets.UTF_8));
+        Document document =
+                documentBuilderFactory
+                        .newDocumentBuilder()
+                        .parse(IOUtils.toInputStream(dossierXml, StandardCharsets.UTF_8));
 
-        DOMSignContext dsc = new DOMSignContext(keyEntry.getPrivateKey(), document.getDocumentElement());
+        DOMSignContext dsc =
+                new DOMSignContext(keyEntry.getPrivateKey(), document.getDocumentElement());
 
         XMLSignature signature = fac.newXMLSignature(si, keyInfo);
 

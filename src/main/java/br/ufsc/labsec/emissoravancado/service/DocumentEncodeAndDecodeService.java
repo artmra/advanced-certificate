@@ -16,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +34,7 @@ public class DocumentEncodeAndDecodeService {
             return encodeToB64((VerifierResponseWithSingleSubAltName) verifierResponse);
         return encodeToB64((VerifierResponseWithMultiSubAltName) verifierResponse);
     }
+
     private String encodeToB64(
             VerifierResponseWithMultiSubAltName verifierResponseWithMultiSubAltName) {
         String json = GSON.toJson(verifierResponseWithMultiSubAltName);

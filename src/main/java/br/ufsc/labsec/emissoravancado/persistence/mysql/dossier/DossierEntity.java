@@ -2,33 +2,50 @@ package br.ufsc.labsec.emissoravancado.persistence.mysql.dossier;
 
 import br.ufsc.labsec.emissoravancado.persistence.mysql.certificate.CertificateEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.document.DocumentEntity;
+import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 import javax.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "dossier")
-public class DossierEntity {
-    @Id
+@Table(name = "dossier", schema = "emissor_avancado", catalog = "")
+public class DossierEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
     @Column(name = "id", nullable = false)
-    private Long id;
+    private long id;
 
     @Basic
+    @Lob
     @Column(name = "xml", nullable = false)
     private String xml;
-
-    @Basic
-    @Column(name = "b64_signature", nullable = false)
-    private String b64Signature;
 
     @OneToOne(mappedBy = "dossier")
     private CertificateEntity certificate;
 
     @OneToMany(mappedBy = "dossier")
     private Set<DocumentEntity> documents;
+
+    public DossierEntity(String xml) {
+        this.xml = xml;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DossierEntity that = (DossierEntity) o;
+        return id == that.id && Objects.equals(xml, that.xml);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, xml);
+    }
 }

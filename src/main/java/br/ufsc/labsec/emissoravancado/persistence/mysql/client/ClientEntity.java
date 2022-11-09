@@ -25,7 +25,7 @@ public class ClientEntity implements Serializable {
     private String cpf;
 
     @Basic
-    @Column(name = "last_certificate_serial_number", nullable = false)
+    @Column(name = "last_certificate_serial_number")
     private String lastCertificateSerialNumber;
 
     @OneToMany(mappedBy = "client")

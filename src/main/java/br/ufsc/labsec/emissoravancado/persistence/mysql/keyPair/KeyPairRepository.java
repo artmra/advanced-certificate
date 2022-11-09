@@ -1,6 +1,7 @@
 package br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface KeyPairRepository extends JpaRepository<KeyPairEntity, Long> {
-}
+@Repository
+public interface KeyPairRepository extends JpaRepository<KeyPairEntity, Long> {}

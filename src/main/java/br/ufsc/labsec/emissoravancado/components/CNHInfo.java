@@ -1,5 +1,6 @@
 package br.ufsc.labsec.emissoravancado.components;
 
+import br.ufsc.labsec.emissoravancado.persistence.mysql.document.DocumentTypeEnum;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,4 +20,9 @@ public class CNHInfo {
     private final String issuePlace;
     private final String issueDate;
     private final String nationality;
+
+    public String createFilename(String filenameTemplate, DocumentTypeEnum documentTypeEnum) {
+        return String.format(
+                filenameTemplate, this.name.replace(" ", "-"), documentTypeEnum.getDocumentType());
+    }
 }
