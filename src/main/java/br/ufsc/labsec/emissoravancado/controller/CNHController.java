@@ -24,14 +24,13 @@ public class CNHController {
 
     @SneakyThrows
     @PostMapping("/issue")
-    public ResponseEntity<CNHServiceResponse> issueCertificate(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<CNHServiceResponse> issueCertificate(
+            @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             // todo: loggar erro e retornar algo
         }
         CNHServiceResponse cnhServiceResponse = this.cnhService.issueAdvancedCertificate(file);
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(cnhServiceResponse);
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(cnhServiceResponse);
     }
 
     @SneakyThrows

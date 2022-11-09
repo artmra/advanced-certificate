@@ -14,9 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.util.Base64;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.openssl.PEMParser;
@@ -74,11 +72,8 @@ public class HawaCaService {
         return certificateApplicationDTO;
     }
 
-    public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo)
+    public CertificateResponse issueCertificateWithoutCsr(CNHInfo cnhInfo, String b64PubKey)
             throws NoSuchAlgorithmException, IOException {
-        KeyPair keyPair = keyService.generateKeyPair();
-        PublicKey publicKey = keyPair.getPublic();
-        String b64PubKey = keyService.convertKeyToB64(publicKey);
         NoCsrIssuingRequest noCsrIssuingRequest = createNoCsrIssuingRequest(cnhInfo, b64PubKey);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -96,12 +91,13 @@ public class HawaCaService {
         return Base64.getEncoder().encodeToString(certificateHolder.getEncoded());
     }
 
-    public X509CertificateHolder convertResponseToCertHolder(CertificateResponse certificateResponse) throws IOException {
+    public X509CertificateHolder convertResponseToCertHolder(
+            CertificateResponse certificateResponse) throws IOException {
         ByteArrayInputStream pemStream =
                 new ByteArrayInputStream(
                         certificateResponse.getCertificatePem().getBytes(StandardCharsets.UTF_8));
         Reader pemReader = new BufferedReader(new InputStreamReader(pemStream));
         PEMParser pemParser = new PEMParser(pemReader);
-        return  (X509CertificateHolder) pemParser.readObject();
+        return (X509CertificateHolder) pemParser.readObject();
     }
 }

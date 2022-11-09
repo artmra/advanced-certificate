@@ -2,6 +2,7 @@ package br.ufsc.labsec.emissoravancado.service;
 
 import br.ufsc.labsec.emissoravancado.components.enums.KeyTypeEnum;
 import br.ufsc.labsec.emissoravancado.components.enums.PemEnum;
+import br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair.KeyPairEntity;
 import java.io.*;
 import java.security.*;
 import java.util.Base64;
@@ -40,6 +41,13 @@ public class KeyService {
     public String convertKeyToB64(Key key) throws IOException {
         byte[] encodedKey = key.getEncoded();
         return Base64.getEncoder().encodeToString(encodedKey);
+    }
+
+    public KeyPairEntity createKeyPairEntity() throws NoSuchAlgorithmException, IOException {
+        KeyPair keyPair = this.generateKeyPair();
+        String b64PrivateKey = this.convertKeyToB64(keyPair.getPrivate());
+        String b64PublicKey = this.convertKeyToB64(keyPair.getPublic());
+        return new KeyPairEntity(b64PrivateKey, b64PublicKey);
     }
 
     public String writeKeyToPEMString(Key key, PemEnum header)

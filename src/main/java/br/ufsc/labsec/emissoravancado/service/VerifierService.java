@@ -7,6 +7,7 @@ import br.ufsc.labsec.emissoravancado.errorHandlers.VerifierResponseErrorHandler
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
 
 @Service
 public class VerifierService {
@@ -61,11 +60,9 @@ public class VerifierService {
     public VerifierResponse getVerifierResponseFromJson(String json) {
         VerifierResponse verifierResponse;
         try {
-            verifierResponse =
-                    GSON.fromJson(json, VerifierResponseWithMultiSubAltName.class);
+            verifierResponse = GSON.fromJson(json, VerifierResponseWithMultiSubAltName.class);
         } catch (JsonSyntaxException ex) {
-            verifierResponse =
-                    GSON.fromJson(json, VerifierResponseWithSingleSubAltName.class);
+            verifierResponse = GSON.fromJson(json, VerifierResponseWithSingleSubAltName.class);
         }
         return verifierResponse;
     }
@@ -73,26 +70,47 @@ public class VerifierService {
     public void checkSignatureAndValidity(VerifierResponse verifierResponse) {
         if (verifierResponse instanceof VerifierResponseWithMultiSubAltName) {
             var parsedResponse = (VerifierResponseWithMultiSubAltName) verifierResponse;
-            List<VerifierResponseWithMultiSubAltName.ReportCertificate> certificates = parsedResponse.getReport().getSignatures().getSignature().getCertification().getSigner().getCertificate();
-            for (var certificate: certificates) {
+            List<VerifierResponseWithMultiSubAltName.ReportCertificate> certificates =
+                    parsedResponse
+                            .getReport()
+                            .getSignatures()
+                            .getSignature()
+                            .getCertification()
+                            .getSigner()
+                            .getCertificate();
+            for (var certificate : certificates) {
                 if (!certificate.isValidSignature())
-                    throw new RuntimeException("A cadeia de certificação possui um certificado com assinatura inválida");
+                    throw new RuntimeException(
+                            "A cadeia de certificação possui um certificado com assinatura"
+                                    + " inválida");
                 if (certificate.isExpired())
-                    throw new RuntimeException("A cadeia de certificação possui um certificado expirado");
+                    throw new RuntimeException(
+                            "A cadeia de certificação possui um certificado expirado");
                 if (certificate.isRevoked())
-                    throw new RuntimeException("A cadeia de certificação possui um certificado revogado");
+                    throw new RuntimeException(
+                            "A cadeia de certificação possui um certificado revogado");
             }
             return;
         }
         var parsedResponse = (VerifierResponseWithSingleSubAltName) verifierResponse;
-        List<VerifierResponseWithSingleSubAltName.ReportCertificate> certificates = parsedResponse.getReport().getSignatures().getSignature().getCertification().getSigner().getCertificate();
-        for (var certificate: certificates) {
+        List<VerifierResponseWithSingleSubAltName.ReportCertificate> certificates =
+                parsedResponse
+                        .getReport()
+                        .getSignatures()
+                        .getSignature()
+                        .getCertification()
+                        .getSigner()
+                        .getCertificate();
+        for (var certificate : certificates) {
             if (!certificate.isValidSignature())
-                throw new RuntimeException("A cadeia de certificação possui um certificado com assinatura inválida");
+                throw new RuntimeException(
+                        "A cadeia de certificação possui um certificado com assinatura inválida");
             if (certificate.isExpired())
-                throw new RuntimeException("A cadeia de certificação possui um certificado expirado");
+                throw new RuntimeException(
+                        "A cadeia de certificação possui um certificado expirado");
             if (certificate.isRevoked())
-                throw new RuntimeException("A cadeia de certificação possui um certificado revogado");
+                throw new RuntimeException(
+                        "A cadeia de certificação possui um certificado revogado");
         }
     }
 }

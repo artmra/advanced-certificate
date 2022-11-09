@@ -18,6 +18,12 @@ verifier-service:
 tesseract-service:
   datapath: ${TESSERACT_DATAPATH:/usr/share/tesseract/tessdata}
 
+dossier-service:
+  key-store-filename: ${KEY_STORE_PATH:key-store.jks}
+  key-entry: ${KEY_ENTRY:dossier-key}
+  key-entry-password: ${KEY_ENTRY_PASSWORD:dossier-key-1234}
+  key-store-password: ${KEY_STORE_PASSWORD:key-store-1234}
+
 #usr/share/tesseract-ocr/4.00/tessdata/
 
 spring:
