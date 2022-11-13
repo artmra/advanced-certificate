@@ -12,13 +12,14 @@ import br.ufsc.labsec.emissoravancado.persistence.mysql.document.DocumentTypeEnu
 import br.ufsc.labsec.emissoravancado.persistence.mysql.dossier.DossierEntity;
 import br.ufsc.labsec.emissoravancado.service.CNHService;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableEntryException;
+import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.Date;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.util.NoSuchElementException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.XMLSignatureException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -55,15 +56,18 @@ public class CNHController {
 
     @PostMapping("/issue")
     public ResponseEntity<CNHServiceIssueResponse> issueCertificate(
-            @RequestParam("file") MultipartFile file)
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("key-password") String keyPassword)
             throws MarshalException, InvalidAlgorithmParameterException, TesseractException,
                     CertificateException, IOException, NoSuchAlgorithmException, KeyStoreException,
                     SAXException, UnrecoverableEntryException, ParserConfigurationException,
-                    XMLSignatureException, TransformerException {
+                    XMLSignatureException, TransformerException, NoSuchPaddingException,
+                    IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException,
+                    InvalidParameterSpecException, NoSuchProviderException, InvalidKeyException {
         if (file.isEmpty()) {
             throw new FileMissingException(FILE_MISSING);
         }
-        CertificateEntity certificate = this.cnhService.issueAdvancedCertificate(file);
+        CertificateEntity certificate = this.cnhService.issueAdvancedCertificate(file, keyPassword);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(
@@ -77,7 +81,12 @@ public class CNHController {
         CertificateEntity revokedCertificate = this.cnhService.revoke(serialNumber);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new CNHServiceRevokeResponse(true, serialNumber, new Date()));
+                .body(
+                        new CNHServiceRevokeResponse(
+                                true,
+                                revokedCertificate.getSerialNumber(),
+                                revokedCertificate.getB64Cert(),
+                                revokedCertificate.getRevocationDate()));
     }
 
     @GetMapping("/get-cert")

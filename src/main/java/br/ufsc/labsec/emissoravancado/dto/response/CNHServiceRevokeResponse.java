@@ -13,5 +13,6 @@ import lombok.Setter;
 public class CNHServiceRevokeResponse {
     private boolean revoked;
     private String serialNumber;
+    private String certB64;
     private Date revocationDate;
 }

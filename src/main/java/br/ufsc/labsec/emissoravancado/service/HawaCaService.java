@@ -75,9 +75,10 @@ public class HawaCaService {
         return certificateApplicationDTO;
     }
 
-    private RevocationRequestNoCmc createNoCmcRevocationRequest(CertificateEntity certificate) {
+    private RevocationRequestNoCmc createNoCmcRevocationRequest(
+            CertificateEntity certificate, Date revocationDate) {
         RevocationRequestNoCmc revocationRequestNoCmc = new RevocationRequestNoCmc();
-        revocationRequestNoCmc.setDate(new Date().getTime());
+        revocationRequestNoCmc.setDate(revocationDate.getTime());
         revocationRequestNoCmc.setSerialNumber(certificate.getSerialNumber());
         revocationRequestNoCmc.setComment(
                 "Certificado revogado através do uso do endpoint de revogação da API do Emissor"
@@ -101,8 +102,10 @@ public class HawaCaService {
         return response.getBody();
     }
 
-    public RevocationResponse revokeCertificate(CertificateEntity certificate) {
-        RevocationRequestNoCmc noCmcRevocationRequest = createNoCmcRevocationRequest(certificate);
+    public RevocationResponse revokeCertificate(
+            CertificateEntity certificate, Date revocationDate) {
+        RevocationRequestNoCmc noCmcRevocationRequest =
+                createNoCmcRevocationRequest(certificate, revocationDate);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity<>(GSON.toJson(noCmcRevocationRequest), headers);

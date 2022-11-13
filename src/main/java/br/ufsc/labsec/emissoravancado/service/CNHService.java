@@ -19,14 +19,17 @@ import br.ufsc.labsec.valueobject.crypto.noncmc.CertificateResponse;
 import br.ufsc.labsec.valueobject.crypto.noncmc.RevocationResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableEntryException;
+import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.xml.crypto.MarshalException;
 import javax.xml.crypto.dsig.XMLSignatureException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -88,11 +91,14 @@ public class CNHService {
         this.hawaCaService = hawaCaService;
     }
 
-    public CertificateEntity issueAdvancedCertificate(MultipartFile file)
+    public CertificateEntity issueAdvancedCertificate(MultipartFile file, String keyPassword)
             throws IOException, TesseractException, NoSuchAlgorithmException,
                     ParserConfigurationException, TransformerException, MarshalException,
                     InvalidAlgorithmParameterException, UnrecoverableEntryException,
-                    CertificateException, KeyStoreException, XMLSignatureException, SAXException {
+                    CertificateException, KeyStoreException, XMLSignatureException, SAXException,
+                    NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException,
+                    InvalidKeySpecException, InvalidParameterSpecException, NoSuchProviderException,
+                    InvalidKeyException {
         // verificar assinatura
         VerifierResponse verifierResponse = this.verifierService.verifyPDF(file.getResource());
         // tenta extrair as imagens do pdf com pdfBox; se algo der errado retornar erro
@@ -107,7 +113,7 @@ public class CNHService {
                                 this.clientRepository.save(
                                         new ClientEntity(extratedCnhInfo.getCpf(), "")));
         // gera chave para emitir certificado
-        KeyPairEntity keyPair = keyService.createKeyPairEntity();
+        KeyPairEntity keyPair = keyService.createKeyPairEntity(keyPassword);
         // tenta emitir certificado com hawa; se algo der errado retornar erro
         CertificateResponse certificateResponse =
                 this.hawaCaService.issueCertificateWithoutCsr(
@@ -204,9 +210,15 @@ public class CNHService {
 
     public CertificateEntity revoke(String serialNumber) {
         CertificateEntity certificate = getIssuedCertificate(serialNumber);
-        RevocationResponse revocationResponse = this.hawaCaService.revokeCertificate(certificate);
+        if (certificate.isRevoked()) {
+            return certificate;
+        }
+        Date revocationDate = new Date();
+        RevocationResponse revocationResponse =
+                this.hawaCaService.revokeCertificate(certificate, revocationDate);
         if (revocationResponse.isSuccess()) {
             certificate.setRevoked(true);
+            certificate.setRevocationDate(revocationDate);
             return this.certificateRepository.save(certificate);
         }
         throw new InternalErrorException(FAILED_TO_REVOKE);

@@ -5,10 +5,14 @@ import br.ufsc.labsec.emissoravancado.components.enums.PemEnum;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair.KeyPairEntity;
 import java.io.*;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
+import java.security.spec.KeySpec;
 import java.util.Base64;
-import org.bouncycastle.asn1.pkcs.CertificationRequestInfo;
+import javax.crypto.*;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x509.DigestInfo;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMParser;
@@ -23,6 +27,8 @@ public class KeyService {
 
     private final int keySize;
     private final KeyTypeEnum keyAlgorithm;
+    private static final String PBE_ALGORITHM = "PBEWithSHA1AndDESede";
+    private static final int ITERATION_COUNT = 1000; // hash iteration count
 
     public KeyService(
             @Value("${key-service.key-size}") int keySize,
@@ -38,16 +44,28 @@ public class KeyService {
         return keyPairGenerator.generateKeyPair();
     }
 
-    public String convertKeyToB64(Key key) throws IOException {
-        byte[] encodedKey = key.getEncoded();
+    public String convertKeyToB64(Key key, String keyPassword)
+            throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException,
+                    IllegalBlockSizeException, NoSuchAlgorithmException, InvalidKeySpecException,
+                    InvalidParameterSpecException, BadPaddingException, InvalidKeyException,
+                    NoSuchProviderException {
+        byte[] encodedKey =
+                key instanceof PrivateKey
+                        ? encryptKey((PrivateKey) key, keyPassword)
+                        : key.getEncoded();
         return Base64.getEncoder().encodeToString(encodedKey);
     }
 
-    public KeyPairEntity createKeyPairEntity() throws NoSuchAlgorithmException, IOException {
+    public KeyPairEntity createKeyPairEntity(String keyPassword)
+            throws NoSuchAlgorithmException, IOException, NoSuchPaddingException,
+                    InvalidKeyException, IllegalBlockSizeException, BadPaddingException,
+                    InvalidAlgorithmParameterException, InvalidKeySpecException,
+                    InvalidParameterSpecException, NoSuchProviderException {
+
         KeyPair keyPair = this.generateKeyPair();
-        String b64PrivateKey = this.convertKeyToB64(keyPair.getPrivate());
-        String b64PublicKey = this.convertKeyToB64(keyPair.getPublic());
-        return new KeyPairEntity(b64PrivateKey, b64PublicKey);
+        String b64EncryptedPrivateKey = this.convertKeyToB64(keyPair.getPrivate(), keyPassword);
+        String b64PublicKey = this.convertKeyToB64(keyPair.getPublic(), keyPassword);
+        return new KeyPairEntity(b64EncryptedPrivateKey, b64PublicKey);
     }
 
     public String writeKeyToPEMString(Key key, PemEnum header)
@@ -87,48 +105,42 @@ public class KeyService {
         return converter.getPublicKey(publicKeyInfo);
     }
 
-    public String signCertificationRequestInfo(
-            PrivateKey privateKey, PublicKey publicKey, String certReqInfoB64)
-            throws InvalidKeyException, NoSuchAlgorithmException, IOException, SignatureException {
-        // sign bytes of CERT_REQ_INFO_B64
-        Signature signature = Signature.getInstance("SHA256WithRSA", new BouncyCastleProvider());
-        signature.initSign(privateKey);
-        CertificationRequestInfo certificationRequestInfo =
-                CertificationRequestInfo.getInstance(Base64.getDecoder().decode(certReqInfoB64));
-        signature.update(certificationRequestInfo.getEncoded());
-        byte[] resultBytesCertReqInfo = signature.sign();
-        // validate the result
-        return verifySignature(
-                signature,
-                certificationRequestInfo.getEncoded(),
-                publicKey,
-                resultBytesCertReqInfo);
+    private byte[] encryptKey(PrivateKey privateKey, String keyPassword)
+            throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException,
+                    InvalidAlgorithmParameterException, InvalidKeyException,
+                    InvalidParameterSpecException, IOException, IllegalBlockSizeException,
+                    BadPaddingException {
+        byte[] salt = new byte[8];
+        new SecureRandom().nextBytes(salt);
+        PBEParameterSpec pbeParameterSpec = new PBEParameterSpec(salt, ITERATION_COUNT);
+        PBEKeySpec pbeKeySpec = new PBEKeySpec(keyPassword.toCharArray());
+        SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(PBE_ALGORITHM);
+        SecretKey pbeKey = secretKeyFactory.generateSecret(pbeKeySpec);
+        Cipher cipher = Cipher.getInstance(PBE_ALGORITHM);
+        cipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParameterSpec);
+        byte[] encryptedKeyBytes = cipher.doFinal(privateKey.getEncoded());
+        AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(PBE_ALGORITHM);
+        algorithmParameters.init(pbeParameterSpec);
+        EncryptedPrivateKeyInfo encinfo =
+                new EncryptedPrivateKeyInfo(algorithmParameters, encryptedKeyBytes);
+        return encinfo.getEncoded();
     }
 
-    public String signCertificationRequestInfoDigest(
-            PrivateKey privateKey, PublicKey publicKey, String certReqInfoDigestB64)
-            throws InvalidKeyException, NoSuchAlgorithmException, IOException, SignatureException {
-        // sign bytes of CERT_REQ_INFO_DIGEST_B64
-        Signature signature = Signature.getInstance("RSA", new BouncyCastleProvider());
-        signature.initSign(privateKey);
-        DigestInfo digestInfo =
-                DigestInfo.getInstance(Base64.getDecoder().decode(certReqInfoDigestB64));
-        signature.update(digestInfo.getDigest());
-        byte[] resultBytesCertReqInfoDigest = signature.sign();
-        // validate the result
-        return this.verifySignature(
-                signature, digestInfo.getDigest(), publicKey, resultBytesCertReqInfoDigest);
-    }
-
-    public String verifySignature(
-            Signature signature, byte[] originalContent, PublicKey publicKey, byte[] signedContent)
-            throws InvalidKeyException, SignatureException {
-        signature.initVerify(publicKey);
-        signature.update(originalContent);
-        if (signature.verify(signedContent)) {
-            return new String(Base64.getEncoder().encode(signedContent));
-        }
-
-        throw new RuntimeException("A assinatura não pode ser validada.");
+    public PrivateKey decryptPrivateKey(String b64EncryptedPrivateKey, String keyPassword)
+            throws InvalidKeySpecException, NoSuchAlgorithmException,
+                    InvalidAlgorithmParameterException, InvalidKeyException, NoSuchPaddingException,
+                    IOException {
+        EncryptedPrivateKeyInfo encryptedPrivateKeyInfo =
+                new EncryptedPrivateKeyInfo(Base64.getDecoder().decode(b64EncryptedPrivateKey));
+        Cipher cipher = Cipher.getInstance(encryptedPrivateKeyInfo.getAlgName());
+        PBEKeySpec pbeKeySpec = new PBEKeySpec(keyPassword.toCharArray());
+        SecretKeyFactory secretKeyFactory =
+                SecretKeyFactory.getInstance(encryptedPrivateKeyInfo.getAlgName());
+        Key privateKey = secretKeyFactory.generateSecret(pbeKeySpec);
+        AlgorithmParameters algorithmParameters = encryptedPrivateKeyInfo.getAlgParameters();
+        cipher.init(Cipher.DECRYPT_MODE, privateKey, algorithmParameters);
+        KeySpec keySpec = encryptedPrivateKeyInfo.getKeySpec(cipher);
+        KeyFactory keyFactory = KeyFactory.getInstance(this.keyAlgorithm.getName());
+        return keyFactory.generatePrivate(keySpec);
     }
 }

@@ -21,8 +21,8 @@ public class KeyPairEntity implements Serializable {
 
     @Basic
     @Lob
-    @Column(name = "b64_private_key", nullable = false)
-    private String b64PrivateKey;
+    @Column(name = "b64_encrypted_private_key", nullable = false)
+    private String b64EncryptedPrivateKey;
 
     @Basic
     @Lob
@@ -33,7 +33,7 @@ public class KeyPairEntity implements Serializable {
     private CertificateEntity certificate;
 
     public KeyPairEntity(String b64PrivateKey, String b64PublicKey) {
-        this.b64PrivateKey = b64PrivateKey;
+        this.b64EncryptedPrivateKey = b64PrivateKey;
         this.b64PublicKey = b64PublicKey;
     }
 
@@ -43,12 +43,12 @@ public class KeyPairEntity implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         KeyPairEntity that = (KeyPairEntity) o;
         return id == that.id
-                && Objects.equals(b64PrivateKey, that.b64PrivateKey)
+                && Objects.equals(b64EncryptedPrivateKey, that.b64EncryptedPrivateKey)
                 && Objects.equals(b64PublicKey, that.b64PublicKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, b64PrivateKey, b64PublicKey);
+        return Objects.hash(id, b64EncryptedPrivateKey, b64PublicKey);
     }
 }

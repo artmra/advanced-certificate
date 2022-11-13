@@ -4,6 +4,7 @@ import br.ufsc.labsec.emissoravancado.persistence.mysql.client.ClientEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.dossier.DossierEntity;
 import br.ufsc.labsec.emissoravancado.persistence.mysql.keyPair.KeyPairEntity;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.Objects;
 import javax.persistence.*;
 import lombok.Getter;
@@ -29,6 +30,10 @@ public class CertificateEntity implements Serializable {
     @Basic
     @Column(name = "revoked", nullable = false)
     private boolean revoked;
+
+    @Basic
+    @Column(name = "revocation_date")
+    private Date revocationDate;
 
     @Basic
     @Column(name = "serial_number", nullable = false, unique = true)
