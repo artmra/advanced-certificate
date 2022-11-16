@@ -15,16 +15,22 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class TesseractService {
-    private final String tesseractDatapath;
-    private final String tesseractLanguage = "por";
+    private static final String TESSERACT_LANGUAGE = "por";
+    private static final String USER_DEFINED_DPI = "user_defined_dpi";
+    private static final String DEFAULT_DPI = "100";
     private final ITesseract instance;
 
     @Autowired
-    public TesseractService(@Value("${tesseract-service.datapath}") String tesseractDatapath) {
-        this.tesseractDatapath = tesseractDatapath;
+    public TesseractService(
+            @Value("${tesseract-service.datapath}") String tesseractDatapath,
+            @Value("${tesseract-service.ocr-engine-mode}") int ocrEngineMode,
+            @Value("${tesseract-service.page-segmentation-mode}") int pageSegmentationMode) {
         this.instance = new Tesseract();
-        this.instance.setDatapath(this.tesseractDatapath);
-        this.instance.setLanguage(this.tesseractLanguage);
+        this.instance.setVariable(USER_DEFINED_DPI, DEFAULT_DPI);
+        this.instance.setOcrEngineMode(ocrEngineMode);
+        this.instance.setPageSegMode(pageSegmentationMode);
+        this.instance.setDatapath(tesseractDatapath);
+        this.instance.setLanguage(TESSERACT_LANGUAGE);
     }
 
     public CNHInfo extractData(List<BufferedImage> images) throws TesseractException {

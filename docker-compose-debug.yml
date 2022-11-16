@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   emissor-avancado-debug:
-    image: emissor-avancado:debug
+    image: emissor-avancado:local
     environment:
       - DB_ADDRESS=db-arthur
       - DB_PORT=3306
@@ -9,6 +9,9 @@ services:
       - DB_USERNAME=dev
       - DB_PASSWORD=dev1234
       - TESSERACT_DATAPATH=/usr/share/tesseract-ocr/4.00/tessdata/
+      - OMP_THREAD_LIMIT=1
+      - TESSERACT_PAGE_SEGMENTATION_MODE=6
+      - TESSERACT_OCR_ENGINE_MODE=1
     ports:
       - "8080:8080"
       - "5005:5005"

@@ -17,6 +17,8 @@ verifier-service:
 
 tesseract-service:
   datapath: ${TESSERACT_DATAPATH:/usr/share/tesseract/tessdata}
+  ocr-engine-mode: ${TESSERACT_OCR_ENGINE_MODE:3}
+  page-segmentation-mode: ${TESSERACT_PAGE_SEGMENTATION_MODE:3}
 
 dossier-service:
   key-store-filename: ${KEY_STORE_PATH:key-store.jks}
@@ -35,5 +37,5 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
 
