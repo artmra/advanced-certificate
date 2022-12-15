@@ -4,7 +4,7 @@ server:
   port: ${SERVER_PORT:8080}
 
 hawa-ca-service:
-  address: ${HAWA_ADDRESS:http://150.162.56.176:2901/hawa-ca/1}
+  address: ${HAWA_ADDRESS:hawa.dev.labsec.ufs.br}
   city: ${CITY:Florianopolis}
   state: ${STATE:SC}
 
@@ -16,9 +16,9 @@ verifier-service:
   address: ${VERIFIER_ADDRESS:https://pbad.labsec.ufsc.br/verifier-hom/report}
 
 tesseract-service:
-  datapath: ${TESSERACT_DATAPATH:/usr/share/tesseract/tessdata}
-  ocr-engine-mode: ${TESSERACT_OCR_ENGINE_MODE:3}
-  page-segmentation-mode: ${TESSERACT_PAGE_SEGMENTATION_MODE:3}
+  datapath: ${TESS_DATAPATH:/usr/share/tesseract/tessdata}
+  ocr-engine-mode: ${TESS_OCR_ENGINE_MODE:1}
+  page-segmentation-mode: ${TESS_PAGE_SEG_MODE:6}
 
 dossier-service:
   key-store-filename: ${KEY_STORE_PATH:key-store.jks}

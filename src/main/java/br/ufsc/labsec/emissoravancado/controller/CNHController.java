@@ -171,7 +171,7 @@ public class CNHController {
         XMLSignatureException.class,
         TransformerException.class
     })
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<SimpleMessageResponse> handleInternalErrorException(
             InternalErrorException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -179,7 +179,7 @@ public class CNHController {
     }
 
     @ExceptionHandler(VerifierUnavailableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<SimpleMessageResponse> handleVerifierUnavailableException(
             InternalErrorException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
