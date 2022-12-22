@@ -6,6 +6,8 @@ import br.ufsc.labsec.emissoravancado.components.NewCnhFormatInfoMapping;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.regex.Pattern;
+
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -18,6 +20,8 @@ public class TesseractService {
     private static final String TESSERACT_LANGUAGE = "por";
     private static final String USER_DEFINED_DPI = "user_defined_dpi";
     private static final String DEFAULT_DPI = "100";
+    private static final String CPF_REGEX = "[0-9]{11}";
+    private static final String DATE_REGEX = "(3[01]|[12][0-9]|0[1-9])/(1[0-2]|0[1-9])/(19|20)[0-9]{2}";
     private final ITesseract instance;
 
     @Autowired
@@ -42,7 +46,6 @@ public class TesseractService {
             case 5:
                 return this.extractDataFromNewFormat(images.get(1), images.get(2));
             default:
-                // todo: loggar erro e retornar algo
                 throw new RuntimeException("Formato de CNH digital não suportado");
         }
     }
@@ -54,7 +57,9 @@ public class TesseractService {
         builder.name(doOCR(firstImage, LegacyCnhFormatInfoMapping.getNameArea()));
         builder.docInfo(doOCR(firstImage, LegacyCnhFormatInfoMapping.getIdDocInfoArea()));
         builder.cpf(formatCPF(doOCR(firstImage, LegacyCnhFormatInfoMapping.getCpfArea())));
-        builder.birthDate(doOCR(firstImage, LegacyCnhFormatInfoMapping.getBirthDateArea()));
+        String birthDate = doOCR(firstImage, LegacyCnhFormatInfoMapping.getBirthDateArea());
+        validateDate(birthDate);
+        builder.birthDate(birthDate);
         builder.fatherName(doOCR(firstImage, LegacyCnhFormatInfoMapping.getFatherNameArea()));
         builder.motherName(doOCR(firstImage, LegacyCnhFormatInfoMapping.getMotherNameArea()));
         builder.cnh(doOCR(firstImage, LegacyCnhFormatInfoMapping.getRegisterNumberArea()));
@@ -76,7 +81,9 @@ public class TesseractService {
         builder.cpf(formatCPF(doOCR(firstImage, NewCnhFormatInfoMapping.getCpfArea())));
         String birthData = doOCR(firstImage, NewCnhFormatInfoMapping.getBirthInfoArea());
         builder.birthData(birthData);
-        builder.birthDate(extractBirthDate(birthData));
+        String birthDate = extractBirthDate(birthData);
+        validateDate(birthDate);
+        builder.birthDate(birthDate);
         builder.fatherName(doOCR(firstImage, NewCnhFormatInfoMapping.getFatherNameArea()));
         builder.motherName(doOCR(firstImage, NewCnhFormatInfoMapping.getMotherNameArea()));
         builder.cnh(doOCR(firstImage, NewCnhFormatInfoMapping.getRegisterNumberArea()));
@@ -100,7 +107,22 @@ public class TesseractService {
         return s;
     }
 
-    private String formatCPF(String cpf) {
-        return cpf.replace(".", "").replace("-", "");
+    private String formatCPF(String cpf) throws TesseractException {
+        String formatedCpf = cpf.replace(".", "").replace("-", "");
+        validadeCPF(formatedCpf);
+        return formatedCpf;
     }
+
+    private void validadeCPF(String cpf) throws TesseractException {
+        if (!Pattern.matches(CPF_REGEX, cpf)) {
+            throw new TesseractException("Falha ao extrair o cpf do documento");
+        }
+    }
+
+    private void validateDate(String date) throws TesseractException {
+        if (!Pattern.matches(DATE_REGEX, date)) {
+            throw new TesseractException("Falha ao extrair a data de nascimento do documento");
+        }
+    }
+
 }
